@@ -558,7 +558,7 @@ function UploadPage({ signAndSubmitTransaction }) {
         <header className="mb-8">
           <div className="flex items-center justify-center space-x-6">
             <div className="p-3 bg-blue-100 rounded-full animate-pulse">
-              <img src="/assets/logo.png" alt="Logo" className="w-10 h-10 object-cover" />
+              <img src="/assets/logo.png" alt="Logo" className="w-10 h-10 object-cover rounded-full" />
             </div>
             <div className="text-center">
               <h1 className="text-3xl font-bold text-gray-900 mb-4 animate-fade-in">Shelby File Upload</h1>
@@ -808,7 +808,7 @@ function UploadPage({ signAndSubmitTransaction }) {
         <footer className="bg-white rounded-xl shadow-lg p-8 text-center">
           <div className="flex justify-center mb-6">
             <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-              <img src="/assets/logo.png" alt="Logo" className="w-8 h-8 object-cover" />
+              <img src="/assets/logo.png" alt="Logo" className="w-8 h-8 object-cover rounded-full" />
             </div>
           </div>
           <p className="text-gray-600">© 2026 Shelby Upload Tool | Built with Shelby Protocol</p>
@@ -894,7 +894,7 @@ function App() {
               <div className="flex items-center">
                 <div className="flex-shrink-0 flex items-center">
                   <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
-                    <img src="/assets/logo.png" alt="Logo" className="w-full h-full object-cover" />
+                    <img src="/assets/logo.png" alt="Logo" className="w-full h-full object-cover rounded-full" />
                   </div>
                   <span className="font-bold text-xl text-gray-900">Shelby Upload Tool</span>
                 </div>
