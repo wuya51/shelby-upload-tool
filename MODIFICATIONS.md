@@ -66,3 +66,32 @@ setUploadStatus('');
 - All modifications maintain the integrity of original functionality
 - Error messages use browser-native alert dialogs to ensure users see important notifications
 - Upload status messages are automatically cleared after operation completion to keep the interface tidy
+
+## Environment Variables Setup
+
+### Required Variables
+
+1. **VITE_SHELBY_API_KEY**
+   - How to obtain: Register and generate at [Geomi.dev](https://geomi.dev/)
+   - Purpose: Required for API authentication with Shelby network
+
+2. **VITE_SHELBY_BEARER_TOKEN**
+   - Alternative option: Use the token from [Shelby Explorer](https://explorer.shelby.xyz/)
+   - Purpose: Required for authentication with Shelby API
+
+### Setup Instructions
+
+1. **Create .env file**:
+   - Copy `.env.example` to `.env`
+   - Fill in your actual API keys
+
+2. **Example .env file**:
+   ```env
+   # API Keys (Required)
+   VITE_SHELBY_API_KEY=your_api_key_here
+   VITE_SHELBY_BEARER_TOKEN=your_bearer_token_here
+   ```
+
+3. **Optional Variables**:
+   - Network endpoints and module address can be customized if needed
+   - Default values are provided in the code if these variables are not set
