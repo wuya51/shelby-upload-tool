@@ -138,7 +138,7 @@ function Blobs() {
 
         <main>
           <section className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6 pb-3 border-b-2 border-gray-100">Uploaded Files</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6 pb-3 border-b-2 border-gray-100">Uploaded Files ({blobs.length})</h2>
             
             {loading ? (
               <div className="flex items-center justify-center py-12">
