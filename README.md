@@ -89,7 +89,7 @@ setUploadStatus('');
    ```env
    # API Keys (Required)
    VITE_SHELBY_API_KEY=your_api_key_here
-   VITE_SHELBY_BEARER_TOKEN=your_bearer_token_here
+   VITE_SHELBY_BEARER_TOKEN=AG-5Y2LDN4FNNRETSQRMS9VQRFFOKVHSRZ6J
    ```
 
 3. **Optional Variables**:
