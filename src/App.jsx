@@ -558,9 +558,7 @@ function UploadPage({ signAndSubmitTransaction }) {
         <header className="mb-8">
           <div className="flex items-center justify-center space-x-6">
             <div className="p-3 bg-blue-100 rounded-full animate-pulse">
-              <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
-              </svg>
+              <img src="/assets/logo.png" alt="Logo" className="w-10 h-10 object-cover" />
             </div>
             <div className="text-center">
               <h1 className="text-3xl font-bold text-gray-900 mb-4 animate-fade-in">Shelby File Upload</h1>
@@ -810,9 +808,7 @@ function UploadPage({ signAndSubmitTransaction }) {
         <footer className="bg-white rounded-xl shadow-lg p-8 text-center">
           <div className="flex justify-center mb-6">
             <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
-              </svg>
+              <img src="/assets/logo.png" alt="Logo" className="w-8 h-8 object-cover" />
             </div>
           </div>
           <p className="text-gray-600">© 2026 Shelby Upload Tool | Built with Shelby Protocol</p>
