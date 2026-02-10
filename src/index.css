@@ -1,0 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+/* Custom Colors */
+.text-primary {
+  color: #0070f3;
+}
+.bg-primary {
+  background-color: #0070f3;
+}
+.hover\:bg-primary:hover {
+  background-color: #0070f3;
+}
+.text-secondary {
+  color: #6c757d;
+}
+.bg-secondary {
+  background-color: #6c757d;
+}
+.hover\:bg-secondary:hover {
+  background-color: #6c757d;
+}
+
+/* Gradient Colors */
+.from-primary {
+  --tw-gradient-from: #0070f3;
+}
+.to-primary {
+  --tw-gradient-to: #0070f3;
+}
+.from-blue-600 {
+  --tw-gradient-from: #2563eb;
+}
+.to-blue-700 {
+  --tw-gradient-to: #1d4ed8;
+}
+.from-purple-600 {
+  --tw-gradient-from: #7e22ce;
+}
+.to-indigo-600 {
+  --tw-gradient-to: #4f46e5;
+}
+.from-purple-700 {
+  --tw-gradient-from: #6b21a8;
+}
+.to-indigo-700 {
+  --tw-gradient-to: #4338ca;
+}
+
+/* Background Colors */
+.bg-blue-50 {
+  background-color: #eff6ff;
+}
+.bg-green-100 {
+  background-color: #dcfce7;
+}
+.bg-purple-100 {
+  background-color: #f3e8ff;
+}
+.bg-gray-50 {
+  background-color: #f9fafb;
+}
+.bg-gray-100 {
+  background-color: #f3f4f6;
+}
+.bg-gray-200 {
+  background-color: #e5e7eb;
+}
+.hover\:bg-gray-300:hover {
+  background-color: #d1d5db;
+}
+
+/* Border Colors */
+.border-blue-100 {
+  border-color: #dbeafe;
+}
+.border-gray-200 {
+  border-color: #e5e7eb;
+}
+.border-gray-300 {
+  border-color: #d1d5db;
+}
+
+/* Text Colors */
+.text-blue-700 {
+  color: #1d4ed8;
+}
+.text-blue-800 {
+  color: #1e40af;
+}
+.text-green-600 {
+  color: #16a34a;
+}
+.text-purple-600 {
+  color: #7e22ce;
+}
+.text-gray-500 {
+  color: #6b7280;
+}
+.text-gray-600 {
+  color: #4b5563;
+}
+.text-gray-700 {
+  color: #374151;
+}
+.text-gray-800 {
+  color: #1f2937;
+}
+.text-gray-900 {
+  color: #111827;
+}
+.text-white {
+  color: #ffffff;
+}
+
+/* Shadow Colors */
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+.shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Transition Colors */
+.focus\:ring-primary {
+  --tw-ring-color: #0070f3;
+}

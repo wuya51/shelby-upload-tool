@@ -1,0 +1,1430 @@
+上传文件的请求:
+
+请求网址:
+https://api.shelbynet.shelby.xyz/v1
+请求方法:
+GET
+状态代码:
+200 OK
+{
+    "chain_id": 109,
+    "epoch": "659",
+    "ledger_version": "5365763",
+    "oldest_ledger_version": "0",
+    "ledger_timestamp": "1770626605533619",
+    "node_role": "full_node",
+    "oldest_block_height": "0",
+    "block_height": "2422439",
+    "git_hash": "c06e1b8824e5d9db7535c9eed058e24aa7c19bf1"
+}
+请求网址:
+https://api.shelbynet.shelby.xyz/v1/accounts/0x41da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814e
+请求方法:
+GET
+状态代码:
+200 OK
+{
+    "sequence_number": "31",
+    "authentication_key": "0x41da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814e"
+}
+请求网址:
+https://api.shelbynet.shelby.xyz/v1/transactions/simulate?estimate_gas_unit_price=true&estimate_max_gas_amount=true&estimate_prioritized_gas_unit_price=false
+请求方法:
+POST
+状态代码:
+200 OK
+[
+    {
+        "version": "5365779",
+        "hash": "0x4e67b28591f99b64b18b6cabe0910b06f7d1a9d9b297347b5ec03eb281c1ca5b",
+        "state_change_hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "event_root_hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "state_checkpoint_hash": null,
+        "gas_used": "593",
+        "success": true,
+        "vm_status": "Executed successfully",
+        "accumulator_root_hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "changes": [
+            {
+                "address": "0xa",
+                "state_key_hash": "0x1db5441d8fa4229c5844f73fd66da4ad8176cb8793d8b3a7f6ca858722030043",
+                "data": {
+                    "type": "0x1::coin::PairedCoinType",
+                    "data": {
+                        "type": {
+                            "account_address": "0x1",
+                            "module_name": "0x6170746f735f636f696e",
+                            "struct_name": "0x4170746f73436f696e"
+                        }
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xa",
+                "state_key_hash": "0x1db5441d8fa4229c5844f73fd66da4ad8176cb8793d8b3a7f6ca858722030043",
+                "data": {
+                    "type": "0x1::coin::PairedFungibleAssetRefs",
+                    "data": {
+                        "burn_ref_opt": {
+                            "vec": []
+                        },
+                        "mint_ref_opt": {
+                            "vec": [
+                                {
+                                    "metadata": {
+                                        "inner": "0xa"
+                                    }
+                                }
+                            ]
+                        },
+                        "transfer_ref_opt": {
+                            "vec": [
+                                {
+                                    "metadata": {
+                                        "inner": "0xa"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xa",
+                "state_key_hash": "0x1db5441d8fa4229c5844f73fd66da4ad8176cb8793d8b3a7f6ca858722030043",
+                "data": {
+                    "type": "0x1::fungible_asset::ConcurrentSupply",
+                    "data": {
+                        "current": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "18446782654783707436"
+                        }
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xa",
+                "state_key_hash": "0x1db5441d8fa4229c5844f73fd66da4ad8176cb8793d8b3a7f6ca858722030043",
+                "data": {
+                    "type": "0x1::fungible_asset::Metadata",
+                    "data": {
+                        "decimals": 8,
+                        "icon_uri": "",
+                        "name": "Aptos Coin",
+                        "project_uri": "",
+                        "symbol": "APT"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xa",
+                "state_key_hash": "0x1db5441d8fa4229c5844f73fd66da4ad8176cb8793d8b3a7f6ca858722030043",
+                "data": {
+                    "type": "0x1::object::ObjectCore",
+                    "data": {
+                        "allow_ungated_transfer": true,
+                        "guid_creation_num": "1125899906842625",
+                        "owner": "0x1",
+                        "transfer_events": {
+                            "counter": "0",
+                            "guid": {
+                                "id": {
+                                    "addr": "0xa",
+                                    "creation_num": "1125899906842624"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xa",
+                "state_key_hash": "0x1db5441d8fa4229c5844f73fd66da4ad8176cb8793d8b3a7f6ca858722030043",
+                "data": {
+                    "type": "0x1::primary_fungible_store::DeriveRefPod",
+                    "data": {
+                        "metadata_derive_ref": {
+                            "self": "0xa"
+                        }
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0x1e17b3abf249e2f5d0a4b89efb5a7ad7bb9727f226668440d8fcafbb3ee8d0d4",
+                "state_key_hash": "0xdb5e457962b732dcb6b5a381257b535e7198ed99646235d2951711dcc6bf2263",
+                "data": {
+                    "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::storage_provider::StorageProvider",
+                    "data": {
+                        "bls_public_key": {
+                            "bytes": "0x921b8951b398c63f93374f236156fd1e22c24a8f1b73e04990b5ba18e77f4a183dbcd57e821d876a488c0ec89e9237a7"
+                        },
+                        "failure_domain": {
+                            "vec": [
+                                {
+                                    "data_center": "dc_australia"
+                                }
+                            ]
+                        },
+                        "ip_address": "172.16.0.19",
+                        "last_added_to_PG_at": "0",
+                        "num_chunksets_stored": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "164853"
+                        },
+                        "placement_groups": [],
+                        "port": "39431",
+                        "stake": "10000"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0x30f5969f2752262a49dae2227bee2b6d1f842fda691b568d4396c7f290f5e7a5",
+                "state_key_hash": "0x2b371dabb26a6c1b87e1f69a6817b4fb4600de5b45ee653328a3b5af7c7eba8b",
+                "data": {
+                    "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::storage_provider::StorageProvider",
+                    "data": {
+                        "bls_public_key": {
+                            "bytes": "0xa4c7de0d8c7d9c2205bff3f09079dbcf84610ceed08443ea2542e1c6b10097598ebf6e68e583013bf54db5919aec5162"
+                        },
+                        "failure_domain": {
+                            "vec": [
+                                {
+                                    "data_center": "dc_us_west"
+                                }
+                            ]
+                        },
+                        "ip_address": "172.16.0.17",
+                        "last_added_to_PG_at": "0",
+                        "num_chunksets_stored": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "164853"
+                        },
+                        "placement_groups": [],
+                        "port": "39431",
+                        "stake": "10000"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0x41da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814e",
+                "state_key_hash": "0x5ec0766d7ccca33b39fb16bc6642f0d2dc3a5cb9df1790034547381b87577e5c",
+                "data": {
+                    "type": "0x1::account::Account",
+                    "data": {
+                        "authentication_key": "0x41da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814e",
+                        "coin_register_events": {
+                            "counter": "0",
+                            "guid": {
+                                "id": {
+                                    "addr": "0x41da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814e",
+                                    "creation_num": "0"
+                                }
+                            }
+                        },
+                        "guid_creation_num": "2",
+                        "key_rotation_events": {
+                            "counter": "0",
+                            "guid": {
+                                "id": {
+                                    "addr": "0x41da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814e",
+                                    "creation_num": "1"
+                                }
+                            }
+                        },
+                        "rotation_capability_offer": {
+                            "for": {
+                                "vec": []
+                            }
+                        },
+                        "sequence_number": "32",
+                        "signer_capability_offer": {
+                            "for": {
+                                "vec": []
+                            }
+                        }
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0x486e53b55e5dd8bda28b2248f1e0e4a72fe774f6ff8efaf1ecaf8048d24e8c15",
+                "state_key_hash": "0xbb6a00ffa912a6811706d21ef3d3f0bc579bbba639a72ff346d12c33663e3ac6",
+                "data": {
+                    "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::storage_provider::StorageProvider",
+                    "data": {
+                        "bls_public_key": {
+                            "bytes": "0xa2eb4bb13afbab01e7148c249f641a08d69c08615a67a70098b59e1035a025b67712bddf952467131c43cfe6f6da22ea"
+                        },
+                        "failure_domain": {
+                            "vec": [
+                                {
+                                    "data_center": "dc_europe"
+                                }
+                            ]
+                        },
+                        "ip_address": "172.16.0.16",
+                        "last_added_to_PG_at": "0",
+                        "num_chunksets_stored": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "164853"
+                        },
+                        "placement_groups": [],
+                        "port": "39431",
+                        "stake": "10000"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0x4e4c5281a332aa961a89b4c15542c6e08de21d335efcc929243bba0bf9b15c84",
+                "state_key_hash": "0xc8159871dfbb83243f34a1b31a560ae5fd5c5557798bf32719dbc19f03adb73d",
+                "data": {
+                    "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::storage_provider::StorageProvider",
+                    "data": {
+                        "bls_public_key": {
+                            "bytes": "0x838afd603f43add81358cfa4b77c3bdb6d529753b0f35f3cf6c7a792a76153bf3b8e2026c141530e710ba054fcef0f77"
+                        },
+                        "failure_domain": {
+                            "vec": [
+                                {
+                                    "data_center": "dc_asia"
+                                }
+                            ]
+                        },
+                        "ip_address": "172.16.0.11",
+                        "last_added_to_PG_at": "0",
+                        "num_chunksets_stored": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "164853"
+                        },
+                        "placement_groups": [],
+                        "port": "39431",
+                        "stake": "10000"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0x76e8b7db413943f5a146eb142e26a146874f7ef5baab49b0d63148d46c23d67a",
+                "state_key_hash": "0x4f34865c8c48bef36b6d09bc98532edad97edda78f04df02680dd070de25b797",
+                "data": {
+                    "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::storage_provider::StorageProvider",
+                    "data": {
+                        "bls_public_key": {
+                            "bytes": "0xa88df015f1d0c3487028fb92f5014d3562b31061f92759da63cebb1c5f66503f11ff70f5c6b6d67480a1bcb2965a73d5"
+                        },
+                        "failure_domain": {
+                            "vec": [
+                                {
+                                    "data_center": "dc_us_east"
+                                }
+                            ]
+                        },
+                        "ip_address": "172.16.0.9",
+                        "last_added_to_PG_at": "0",
+                        "num_chunksets_stored": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "164853"
+                        },
+                        "placement_groups": [],
+                        "port": "39431",
+                        "stake": "10000"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0x83acaf6f729f18cf55dcf02ebf83e40ecb655c7453dcf850421ec2a8d08174cc",
+                "state_key_hash": "0xd14ef2fcea178aaab83c0d65765720a2db4c54a3eb518d34942ebdff72f1de7c",
+                "data": {
+                    "type": "0x1::fungible_asset::FungibleStore",
+                    "data": {
+                        "balance": "1873496672",
+                        "frozen": false,
+                        "metadata": {
+                            "inner": "0x1b18363a9f1fe5e6ebf247daba5cc1c18052bb232efdc4c50f556053922d98e1"
+                        }
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0x83acaf6f729f18cf55dcf02ebf83e40ecb655c7453dcf850421ec2a8d08174cc",
+                "state_key_hash": "0xd14ef2fcea178aaab83c0d65765720a2db4c54a3eb518d34942ebdff72f1de7c",
+                "data": {
+                    "type": "0x1::object::ObjectCore",
+                    "data": {
+                        "allow_ungated_transfer": false,
+                        "guid_creation_num": "1125899906842625",
+                        "owner": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5",
+                        "transfer_events": {
+                            "counter": "0",
+                            "guid": {
+                                "id": {
+                                    "addr": "0x83acaf6f729f18cf55dcf02ebf83e40ecb655c7453dcf850421ec2a8d08174cc",
+                                    "creation_num": "1125899906842624"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0x83acaf6f729f18cf55dcf02ebf83e40ecb655c7453dcf850421ec2a8d08174cc",
+                "state_key_hash": "0xd14ef2fcea178aaab83c0d65765720a2db4c54a3eb518d34942ebdff72f1de7c",
+                "data": {
+                    "type": "0x1::object::Untransferable",
+                    "data": {
+                        "dummy_field": false
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0x8cf6db4f50434591eb0015c6790a96928278451cc43815fcbd09eade315fbcb6",
+                "state_key_hash": "0xd32b983bd794c46a0c7962efdec3a6a68c074ff2beb52e9e4c8830edaa31db05",
+                "data": {
+                    "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::storage_provider::StorageProvider",
+                    "data": {
+                        "bls_public_key": {
+                            "bytes": "0x99c7c5f666989fde790ab59ded9ba0426a15d175b07fd28c60ba3489d9764a666b25602831582ac457d98ed2e90baacd"
+                        },
+                        "failure_domain": {
+                            "vec": [
+                                {
+                                    "data_center": "dc_australia"
+                                }
+                            ]
+                        },
+                        "ip_address": "172.16.0.18",
+                        "last_added_to_PG_at": "0",
+                        "num_chunksets_stored": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "164853"
+                        },
+                        "placement_groups": [],
+                        "port": "39431",
+                        "stake": "10000"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0x8f72ef0524a9d492fc37e4e1c32d572c48fe2bf762e2b1f852dd4bbefed11772",
+                "state_key_hash": "0x307ed47a3d8494ffb2fedbe510237115153a5c5bf46a0ddb9730d5474625029f",
+                "data": {
+                    "type": "0x1::fungible_asset::FungibleStore",
+                    "data": {
+                        "balance": "999661984",
+                        "frozen": false,
+                        "metadata": {
+                            "inner": "0x1b18363a9f1fe5e6ebf247daba5cc1c18052bb232efdc4c50f556053922d98e1"
+                        }
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0x8f72ef0524a9d492fc37e4e1c32d572c48fe2bf762e2b1f852dd4bbefed11772",
+                "state_key_hash": "0x307ed47a3d8494ffb2fedbe510237115153a5c5bf46a0ddb9730d5474625029f",
+                "data": {
+                    "type": "0x1::object::ObjectCore",
+                    "data": {
+                        "allow_ungated_transfer": false,
+                        "guid_creation_num": "1125899906842625",
+                        "owner": "0x41da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814e",
+                        "transfer_events": {
+                            "counter": "0",
+                            "guid": {
+                                "id": {
+                                    "addr": "0x8f72ef0524a9d492fc37e4e1c32d572c48fe2bf762e2b1f852dd4bbefed11772",
+                                    "creation_num": "1125899906842624"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0x8f72ef0524a9d492fc37e4e1c32d572c48fe2bf762e2b1f852dd4bbefed11772",
+                "state_key_hash": "0x307ed47a3d8494ffb2fedbe510237115153a5c5bf46a0ddb9730d5474625029f",
+                "data": {
+                    "type": "0x1::object::Untransferable",
+                    "data": {
+                        "dummy_field": false
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0x8f829b7c11f5103f0db995b38726b79ab0aaf3924a6b5762a59d288afb6d42d8",
+                "state_key_hash": "0xcde440307baf075f92f77f69c5610cd1ca4869f1467eebc3f6749e29dd6cd3e1",
+                "data": {
+                    "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::storage_provider::StorageProvider",
+                    "data": {
+                        "bls_public_key": {
+                            "bytes": "0x9287dc7cf3598d2676a6fc4a5c295e92e9e1967c8d03c0d270154d0dfda29c2646120610af60748d9f3425efc87ff481"
+                        },
+                        "failure_domain": {
+                            "vec": [
+                                {
+                                    "data_center": "dc_asia"
+                                }
+                            ]
+                        },
+                        "ip_address": "172.16.0.15",
+                        "last_added_to_PG_at": "0",
+                        "num_chunksets_stored": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "164853"
+                        },
+                        "placement_groups": [],
+                        "port": "39431",
+                        "stake": "10000"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0x9934ff966b56ed64136c93349369d9cfb56ddaa29ef5109f254f3d2e4d96814d",
+                "state_key_hash": "0x2096836af6a51688fdfe67b908c741bdca39a6509c269e0f7c1458ab992ca266",
+                "data": {
+                    "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::storage_provider::StorageProvider",
+                    "data": {
+                        "bls_public_key": {
+                            "bytes": "0xaa082a5584b33839f4782ab6cf507e63a1d46072f9a3640f65404a5962ca2f7c119933f7430c678b9cb2dc9ffb83fa88"
+                        },
+                        "failure_domain": {
+                            "vec": [
+                                {
+                                    "data_center": "dc_us_east"
+                                }
+                            ]
+                        },
+                        "ip_address": "172.16.0.13",
+                        "last_added_to_PG_at": "0",
+                        "num_chunksets_stored": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "164853"
+                        },
+                        "placement_groups": [],
+                        "port": "39431",
+                        "stake": "10000"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0x9b27d6aa7da40317c3cbb0634d10f41447289c3dbac1d66cbfaed912c70cb4c6",
+                "state_key_hash": "0x1f89b788637d88024ef609ba4f67e2e8c1b0f43d9bf93f60af53901893325ae4",
+                "data": {
+                    "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::storage_provider::StorageProvider",
+                    "data": {
+                        "bls_public_key": {
+                            "bytes": "0xab8106f06aa6c58b986421f64f1071e4033359f581c6d079f25c6a92b7b0ec8a83ee25b8c5734c8cd0c2540d9634828a"
+                        },
+                        "failure_domain": {
+                            "vec": [
+                                {
+                                    "data_center": "dc_europe"
+                                }
+                            ]
+                        },
+                        "ip_address": "172.16.0.10",
+                        "last_added_to_PG_at": "0",
+                        "num_chunksets_stored": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "164853"
+                        },
+                        "placement_groups": [],
+                        "port": "39431",
+                        "stake": "10000"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xa4226a38803e446042765f8881f595940c2676693430ceb80192b98d503eb083",
+                "state_key_hash": "0x5df9bbd041887d281aa6b0cdc5d04499ff3de39e707d619001dd4fd942a6d6a2",
+                "data": {
+                    "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::storage_provider::StorageProvider",
+                    "data": {
+                        "bls_public_key": {
+                            "bytes": "0xa9c77a042f7d807008514a0e4947edcd9e22b464e758e388735c589dc39a6a8c3e996dd031450bb306b55aa13f9d9973"
+                        },
+                        "failure_domain": {
+                            "vec": [
+                                {
+                                    "data_center": "dc_us_west"
+                                }
+                            ]
+                        },
+                        "ip_address": "172.16.0.4",
+                        "last_added_to_PG_at": "0",
+                        "num_chunksets_stored": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "164853"
+                        },
+                        "placement_groups": [],
+                        "port": "39431",
+                        "stake": "10000"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xa7f5fa48420e188e2b5472cdf011b141f33b0cc617c626bbd16c02140d988cb6",
+                "state_key_hash": "0x1560f34a878d82816308697b1a07ccd3f7c810ca691e82a44d3afa5b05556506",
+                "data": {
+                    "type": "0x1::fungible_asset::FungibleStore",
+                    "data": {
+                        "balance": "997652600",
+                        "frozen": false,
+                        "metadata": {
+                            "inner": "0xa"
+                        }
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xa7f5fa48420e188e2b5472cdf011b141f33b0cc617c626bbd16c02140d988cb6",
+                "state_key_hash": "0x1560f34a878d82816308697b1a07ccd3f7c810ca691e82a44d3afa5b05556506",
+                "data": {
+                    "type": "0x1::object::ObjectCore",
+                    "data": {
+                        "allow_ungated_transfer": false,
+                        "guid_creation_num": "1125899906842625",
+                        "owner": "0x41da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814e",
+                        "transfer_events": {
+                            "counter": "0",
+                            "guid": {
+                                "id": {
+                                    "addr": "0xa7f5fa48420e188e2b5472cdf011b141f33b0cc617c626bbd16c02140d988cb6",
+                                    "creation_num": "1125899906842624"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xbbc795640c8245bf6c0c009c12c4083ab03ef0503995f62c4e86e96285e0f8c1",
+                "state_key_hash": "0xec8648e72060426fd4db617ca76fa684766a32a39ae4a3e9310476288cb00059",
+                "data": {
+                    "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::storage_provider::StorageProvider",
+                    "data": {
+                        "bls_public_key": {
+                            "bytes": "0x8d96472ed12f64fa48397a5f02632bc026f0f799da7c11bf9a03144be8bad7626a93ebc0dd58b89f7c7091d6ed5388e4"
+                        },
+                        "failure_domain": {
+                            "vec": [
+                                {
+                                    "data_center": "dc_europe"
+                                }
+                            ]
+                        },
+                        "ip_address": "172.16.0.7",
+                        "last_added_to_PG_at": "0",
+                        "num_chunksets_stored": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "164853"
+                        },
+                        "placement_groups": [],
+                        "port": "39431",
+                        "stake": "10000"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xbc1eaa2674864d0b5217c378efca85a819bfb7f3dc4b48cfcf6e5e08724d42b0",
+                "state_key_hash": "0x46756ef21077ff43499355217d775ab48fb41f3900976a2e2177ce9bc55846db",
+                "data": {
+                    "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::storage_provider::StorageProvider",
+                    "data": {
+                        "bls_public_key": {
+                            "bytes": "0xb9aef025aa84f215d7ce94f830a3ffe2dc13fbae9a7abcf7b6c17e36441eb2ae757e7a4e6c8e8dd192e214de6a19829e"
+                        },
+                        "failure_domain": {
+                            "vec": [
+                                {
+                                    "data_center": "dc_us_east"
+                                }
+                            ]
+                        },
+                        "ip_address": "172.16.0.3",
+                        "last_added_to_PG_at": "0",
+                        "num_chunksets_stored": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "164853"
+                        },
+                        "placement_groups": [],
+                        "port": "39431",
+                        "stake": "10000"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xc72741ffb4b67e3978e3ab9ba9f8ada21d83cf6b996be0808eda8a156417485d",
+                "state_key_hash": "0xcf51aa263a0a97a41134f7a07d98acd268478210cd16ee248243cd6107eed0db",
+                "data": {
+                    "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::storage_provider::StorageProvider",
+                    "data": {
+                        "bls_public_key": {
+                            "bytes": "0xac0c198badfbea61ac386f6521702e29f1ea6c01a282de183ad39ccb8960ad142a200740e08f2bf2fe51cf76089d2d68"
+                        },
+                        "failure_domain": {
+                            "vec": [
+                                {
+                                    "data_center": "dc_us_east"
+                                }
+                            ]
+                        },
+                        "ip_address": "172.16.0.12",
+                        "last_added_to_PG_at": "0",
+                        "num_chunksets_stored": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "164853"
+                        },
+                        "placement_groups": [],
+                        "port": "39431",
+                        "stake": "10000"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xc8047100e7ca1b9aba12b7e905174ccbc1f9524dde0db3679818def998344081",
+                "state_key_hash": "0x1ff85f372af5487ce3706975721d305089f9fa184b59af33efb48cf1cacae10e",
+                "data": {
+                    "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::storage_provider::StorageProvider",
+                    "data": {
+                        "bls_public_key": {
+                            "bytes": "0xb19613d756ed80bbaee0f67d0f710df728c9ca7a06e936c72181bc6e2e723dc166f4b5378d97488c9234ec7e2ac610e6"
+                        },
+                        "failure_domain": {
+                            "vec": [
+                                {
+                                    "data_center": "dc_australia"
+                                }
+                            ]
+                        },
+                        "ip_address": "172.16.0.14",
+                        "last_added_to_PG_at": "0",
+                        "num_chunksets_stored": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "164853"
+                        },
+                        "placement_groups": [],
+                        "port": "39431",
+                        "stake": "10000"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xcde61d1a6b8310db489e3acb820deae21c20b6f37eac80adea5be391afbdc371",
+                "state_key_hash": "0x5db37f15e3addb9d93b20722d304c396f7bf593d55c9910bf1c29d872410fec5",
+                "data": {
+                    "type": "0x1::fungible_asset::FungibleStore",
+                    "data": {
+                        "balance": "3555326736",
+                        "frozen": false,
+                        "metadata": {
+                            "inner": "0x1b18363a9f1fe5e6ebf247daba5cc1c18052bb232efdc4c50f556053922d98e1"
+                        }
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xcde61d1a6b8310db489e3acb820deae21c20b6f37eac80adea5be391afbdc371",
+                "state_key_hash": "0x5db37f15e3addb9d93b20722d304c396f7bf593d55c9910bf1c29d872410fec5",
+                "data": {
+                    "type": "0x1::object::ObjectCore",
+                    "data": {
+                        "allow_ungated_transfer": false,
+                        "guid_creation_num": "1125899906842625",
+                        "owner": "0xbf244b77bca0a8865c131d5739419a1e241e5cc02f4ed4a1cdf2c4e1ac20e119",
+                        "transfer_events": {
+                            "counter": "0",
+                            "guid": {
+                                "id": {
+                                    "addr": "0xcde61d1a6b8310db489e3acb820deae21c20b6f37eac80adea5be391afbdc371",
+                                    "creation_num": "1125899906842624"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xcde61d1a6b8310db489e3acb820deae21c20b6f37eac80adea5be391afbdc371",
+                "state_key_hash": "0x5db37f15e3addb9d93b20722d304c396f7bf593d55c9910bf1c29d872410fec5",
+                "data": {
+                    "type": "0x1::object::Untransferable",
+                    "data": {
+                        "dummy_field": false
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xd609d38645a0f17ac18c2a3f74c31191a4fe88cc4c56456a567f9979e44f8eea",
+                "state_key_hash": "0x139980df4011ccb806815fde51e89fcd7beff560ad9256e855809cf82bf74ef0",
+                "data": {
+                    "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::storage_provider::StorageProvider",
+                    "data": {
+                        "bls_public_key": {
+                            "bytes": "0x94a29ac4191617178f92da6524892c8a06cf0f893ab4aaff5fb870d095cc255d9c50eb7a10007cdcac3fc66d9449fa36"
+                        },
+                        "failure_domain": {
+                            "vec": [
+                                {
+                                    "data_center": "dc_asia"
+                                }
+                            ]
+                        },
+                        "ip_address": "172.16.0.6",
+                        "last_added_to_PG_at": "0",
+                        "num_chunksets_stored": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "164853"
+                        },
+                        "placement_groups": [],
+                        "port": "39431",
+                        "stake": "10000"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "address": "0xe608a3e95269e1f54fdd2ee3112616d590fc021f1bb00c86ab8b663dd862d71a",
+                "state_key_hash": "0x8ca70c50c16b9492fb88bb95d1f7f802d3bad05a7a11af46e5e66df7232d7c6a",
+                "data": {
+                    "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::storage_provider::StorageProvider",
+                    "data": {
+                        "bls_public_key": {
+                            "bytes": "0xac4bb211f707f2448728f3ddd8a8b850e28525a63ddd31aa70ced8bbbef21b81e738c71b3e4643adaf19fc225acbf528"
+                        },
+                        "failure_domain": {
+                            "vec": [
+                                {
+                                    "data_center": "dc_us_west"
+                                }
+                            ]
+                        },
+                        "ip_address": "172.16.0.5",
+                        "last_added_to_PG_at": "0",
+                        "num_chunksets_stored": {
+                            "max_value": "340282366920938463463374607431768211455",
+                            "value": "164853"
+                        },
+                        "placement_groups": [],
+                        "port": "39431",
+                        "stake": "10000"
+                    }
+                },
+                "type": "write_resource"
+            },
+            {
+                "state_key_hash": "0x7c65ad56c7e0267706eb531383d139f8c247de6c50894938b20505536be459a5",
+                "handle": "0x07f2268852ba0e6ddd2cf4979676fd6fd53fa16fd43eb5a3250a06b1c7e73dff",
+                "key": "0x97d2210000000000",
+                "value": "0x00000100015640343164613736316232316439393564326231313631363633386534386632323334326532613438633566373339353137613665343437613133616435383134652f363039353963373733656637617441592e6a7067010041da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814ec4dde121604a0600a8943f9dbb4c06002050bab76aeebcea8eaf7d5f17617016b9338c602092e621793b4be750b61f16f301000000db83000000000000e29f6354a5d2206b70dbf44351f5775843ab558955fd5c8d8ebd9bd3f7ee35ad00230000000000000100000000000000000000000000000000000000000000000a000000000000000000000000000000000000000001000000000000000100000000000000002f001200",
+                "data": {
+                    "key": "2216599",
+                    "key_type": "u64",
+                    "value": {
+                        "__variant__": "BPlusTreeMap",
+                        "constant_kv_size": false,
+                        "inner_max_degree": 47,
+                        "leaf_max_degree": 18,
+                        "max_leaf_index": "1",
+                        "min_leaf_index": "1",
+                        "nodes": {
+                            "__variant__": "V1",
+                            "new_slot_index": "10",
+                            "reuse_head_index": "0",
+                            "reuse_spare_count": 0,
+                            "should_reuse": false,
+                            "slots": {
+                                "vec": []
+                            }
+                        },
+                        "root": {
+                            "__variant__": "V1",
+                            "children": {
+                                "__variant__": "SortedVectorMap",
+                                "entries": [
+                                    {
+                                        "key": "@41da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814e/60959c773ef7atAY.jpg",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "__variant__": "V1",
+                                                "blob_commitment": "0x50bab76aeebcea8eaf7d5f17617016b9338c602092e621793b4be750b61f16f3",
+                                                "blob_size": "33755",
+                                                "chunkset_acknowledgments": [
+                                                    0
+                                                ],
+                                                "chunkset_count": 1,
+                                                "creation_micros": "1770626606030276",
+                                                "creation_payment_epoch": 0,
+                                                "encoding": {
+                                                    "__variant__": "ClayCode_16Total_10Data_13Helper"
+                                                },
+                                                "expiration_micros": "1773218541049000",
+                                                "is_written": false,
+                                                "num_payment_epochs": 35,
+                                                "owner": "0x41da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814e",
+                                                "payment_tier_id": 0,
+                                                "slice": {
+                                                    "inner": "0xe29f6354a5d2206b70dbf44351f5775843ab558955fd5c8d8ebd9bd3f7ee35ad"
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            "is_leaf": true,
+                            "next": "0",
+                            "prev": "0"
+                        }
+                    },
+                    "value_type": "0x1::big_ordered_map::BigOrderedMap<0x1::string::String, 0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::blob_metadata::BlobMetadata>"
+                },
+                "type": "write_table_item"
+            },
+            {
+                "state_key_hash": "0xcac5464ebdfca0901ce70bcf2b665eec38fe59c0ba0f499af39c9ebbe00d64c4",
+                "handle": "0x7b5071964c18ca7bce69cc5fe783dc45e479089f9c1955d33b07d88e4f91560c",
+                "key": "0x1100000000000000",
+                "value": "0x000001001f20ac78bdbaaf40be7b1aed15eca8680bab3186b8341f3779a4a046b9bbb307090b015a40383933643565633539333139643338396539636331653864626437373166313465326466323739633233316632613830393436353762376636666530343461352f32623032366164396566373231646161616330342e6c6f670100000020ac7933cf01eaa7903bd23a675891f2f21472f4fab07c2b7f7c4d7d5a07646501016240353061373961616666383437643564656333653461346631363839383139663365643032336230343833656464383339643034383330383062626431306364642f653164396337353439316662313061653635396466316664366232662e6d70340100000020ac8d34c522d281c0aefc22d65d85d6ec552f9fa28135370a163948fde1309017016a40303462313239613430323062376338383830626236326365643332393434386138363063376634316135393439333165323861343362613963313063623661632f6636613862626533643661366164353437383330313062653236366364653064323832332e7064660100000020ace5fb0c27b82797f783ac088a2c16b8a239cc713e09a604c7b802269284fe74016240353564633631666263343837363432353865363564663762373334333932636465656563666139353662626530313831666366656163373565326664393765382f53637265656e73686f7420323032332d31322d3133203038353533372e706e670100000020ad5d1d9da1c80829b1f5b77964d9e52bf2f90c06a84d4272c7e8110f188e3e9f015a40323233626561356465346263326435356663623230333863343135326336633033303031633230633633306364346563323265303966373430613631666565352f64636633613465383335326662623234623536392e6c6f670100000020ad63bcef564dad6cdbe6fa5b1195413249ed6c92e6a7a5aa56ee270acaf50d7f015a40316137656338643438313439356561666364356535613137306131383266366461663038386239373732663262353930303931303038643130356434633464332f46425f494d475f313632303232333434353235362e6a70670100000020ad7eb92a3cc604aaa6208fa2a7772d773fad678f505f4bf9e8b5dadeeaa29f0e015340656639636436666336616131313033323637656638646638313438643732313033326363303266313935643166303338303535626165356635386532633033372f6578706f72745f323032355f352e7064660100000020ad8019778d94882c07131683d605e1516307260c18a48e7a7b412f73eaa0fe46015640343164613736316232316439393564326231313631363633386534386632323334326532613438633566373339353137613665343437613133616435383134652f363039353963373733656637617441592e6a70670100000020ad864d09ed496e7bc063c0687e32a35baa848818c6f668ccfe49ea07e2f5728a015340353230623366616337386536656230326439663366323461383630623835383162303631346338616333363561373232346263646534376566343937633861322f696d616765732028323538292e6a7065670100000020ad9cf0918b6d183e0a07a23b829a9547fd33bdb13092c34a5908c9ac63057d6e016640393333336165353338383536313862613939663962616264366535656439383763353864333161353830663635613862373163336538643038393337343736632f32396635343064346564336635613864356161303231643865656630663631612e706e670100000020ada6af280943586f7724b8388b2970e6887ef974278ff987e1255c99bf580298016040333133346436363731663537323133386231393961646335663962613636323433343739623433343633356137386663366461303561666563373962643163392f6175746f2f6d616e75616c2f32335f313737303630373533312e6a736f6e0100000020adceb2aab336fcaf2903a0c17103842964c6bef1844fd773d910d1ba45a8a28e015c40613361623035383364623432353235313665386331636262646535626532313031303162613739646135643062633332363539346164633265306461303735642f383530383938383163633339353861333634613938612e6769660100000020adec8a6cab1981df539c4f6d21d292bbf6241986747f99b375e7cd954e3a1d07016040353362666364623035646133353535643732613132383438313464333864373363376161623237353562653662623233346536643534663435666137386238372f34333664386366306337303039393166356134393434343132352e7a69700100000020adf811bc5629b77f5560a7928be43499763963923760f5d6acbdf748f46e62c1015a40353064623864353935373965373766363363626230343334356335656639353737646561383966343362663864353964343934366666656138363066626230392f37663833353038653638646164303735326337332e6461740100000020ae017675ae20d9897bf0ff27f1f4a7ee0b9ac607b98e0a6477e0b48f22500608016640636337383135346661353464653461356534343136346537626164313066396264373761353862316665613036643734633137633665626162633461653439642f38653363653031366538376265343661303337646663383863386531303530362e7478740100000020ae10dee02e798e52b39aba9e4997b070f3922ff8955880eabbc27de2c48602fa015640653562363137656266343731376631363161353336643230336663643838356164393661353663643338663932366236633230383633333036613937316437662f376664616531663032336336333236392e62696e0100000020ae17fa7de59d3a4c3e8b4ebb2a0f379b5c01e24938c0b3bbb9b33efb40b1689a015240303735646238643633343139383439303663633165363731666538303466396633636437313662646432323331363035306433383130316565363631653864302f6338386339643232643131302e6d70340100000020ae2918a6b425b17e964867d1807d8206b6c97ffdd417d36adb0674b4551b9ccc015240336339663839343032313739323634323136643839336531663837666231326238333465343633303932386261623865623363323336646263396231396436372f494d475f32303236333332342e6373760100000020ae350e1a4e03eff667bdc52ac6df0c746eb51f79625491f027807c670f21f842015640386236653165643463346665653833666162666533313639326166346138666438323330663032643163316437326130386634383038666132336630643231302f306239353262366239373331326230612e6769660100000020ae41bff46dee71a55a0fec347b8b30657d96fcac2566b7eaec61a35d9e1e9b8b016240303066356361393062366165646135616436323562383233643832383830633236316566316236663837313838313637653635373237353135636664326464652f53637265656e73686f7420323032332d31322d3136203233343434372e706e670100000020ae4286a48b914cc6f3b9aedee37c89f60f9d1ca9766c4682ef1f008b90b8b33b016840356462386262666365333332646339656531663632306235356338663064303834643932333261326466393465666638633430303962343138393661323736372f353830623535656461306564386338303631653030616266626261313738613533342e7a69700100000020ae6012dd6d1075d99554ad895265fd53fe4c45cc3a2fb5c761296561091c470f015e40396637663464343835346238623364643734613164333035666530353962353338393932303365303761643666363164393533653163373936636164363836612f6234363732633239373166333735613935623332373432342e62696e0100000020ae669fcd72cfb91d6a12735d18a3f5ebc1aede9cbbc748d2ccf04515ed1acbfc016840646461373164643833383661636237396163653237306530656334306139356561316231353633623062386530636262663233623561646162353631323262382f613261626366373030396135633766656237656637343861666131366233333663332e7a69700100000020ae71d6ec7a4a10db43489aeefa072ec27ecd2ed4ff591d64d1d5367aef5413cc014c40306330626333303166663631656662616262626536323765393466316630663037353339656437363535653934646161303732663235353163666462323330652f3433353535352e706e670100000020ae819ca91c7b84b06f359f001585cb216e099fc59221ec6ac4dbf4c24902fffd015840393066383730656266353839316135623738333566303262613533666263323635616465323932623265336364636664353439376435353838393665653765632f66696c65732f79686f77716e6267757462342e6461740100000020ae821964646efde466b8f3753035832045fd963988432efa0dbd2f362a38627a016440323134353239643034613665313137653631353331313630623262373365613433663965666332653232346139666333343063396164386237323732313034662f6435613935666662636532346134323931333134303232346139326533622e7a69700100000020ae846cf0246a0cf41dc3c78aa905442b0e06b6f744506fbb99b0270dfcfac57e016240656133616161613531303639303531333631343964333436363164316236383061313366346231333463333937333062613462313831323563646539336136642f383832393331383563653563333330336565623761663562313135342e62696e0100000020ae9445e766b361df23493b6609f095b453a2f62b8e48c3f6b850d4b7dd9b13e8015840343135386430363331356134636566396264346635396637643633663262396537333331333134393737313964653836386138363235386666636633633430322f3335396561636536646334653364643137662e6769660100000020ae9f911ce92931bc0c3cfa4011cdc33b228e4744e103844f86dd6e628c4a4b7a015a40373731323939316166376165643265306366653330313932623962353264633735653330353933323864613964376136383234333364616435356537663064322f62623861393437613366396539343232633036662e6c6f670100000020aea8d8f463d61bb503b053b3554c8925b65c471bc9277c3e1423166711de7696015040336336303439346333396466376661313932326230643832656361373232306535323963663439663163373436383332303262663832346234633937663663362f53415a6f7079202835292e6a70670100000020aeaf4b2ba9d0fd044ab4fd3ea2e02e79d019e79546df7768435e18de2c342a4e015d40306364333763663139373165333062376165393433653263653031313162363637393233663937363239613930613561653461303862646538303430373333382f633162353139636332373836633863386133616232392e6a736f6e0100000059000000000000008d00000000000000",
+                "data": {
+                    "key": "17",
+                    "key_type": "u64",
+                    "value": {
+                        "__variant__": "Occupied",
+                        "value": {
+                            "__variant__": "V1",
+                            "children": {
+                                "__variant__": "SortedVectorMap",
+                                "entries": [
+                                    {
+                                        "key": "0xac78bdbaaf40be7b1aed15eca8680bab3186b8341f3779a4a046b9bbb307090b",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@893d5ec59319d389e9cc1e8dbd771f14e2df279c231f2a8094657b7f6fe044a5/2b026ad9ef721daaac04.log",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xac7933cf01eaa7903bd23a675891f2f21472f4fab07c2b7f7c4d7d5a07646501",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@50a79aaff847d5dec3e4a4f1689819f3ed023b0483edd839d0483080bbd10cdd/e1d9c75491fb10ae659df1fd6b2f.mp4",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xac8d34c522d281c0aefc22d65d85d6ec552f9fa28135370a163948fde1309017",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@04b129a4020b7c8880bb62ced329448a860c7f41a594931e28a43ba9c10cb6ac/f6a8bbe3d6a6ad54783010be266cde0d2823.pdf",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xace5fb0c27b82797f783ac088a2c16b8a239cc713e09a604c7b802269284fe74",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@55dc61fbc48764258e65df7b734392cdeeecfa956bbe0181fcfeac75e2fd97e8/Screenshot 2023-12-13 085537.png",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xad5d1d9da1c80829b1f5b77964d9e52bf2f90c06a84d4272c7e8110f188e3e9f",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@223bea5de4bc2d55fcb2038c4152c6c03001c20c630cd4ec22e09f740a61fee5/dcf3a4e8352fbb24b569.log",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xad63bcef564dad6cdbe6fa5b1195413249ed6c92e6a7a5aa56ee270acaf50d7f",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@1a7ec8d481495eafcd5e5a170a182f6daf088b9772f2b590091008d105d4c4d3/FB_IMG_1620223445256.jpg",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xad7eb92a3cc604aaa6208fa2a7772d773fad678f505f4bf9e8b5dadeeaa29f0e",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@ef9cd6fc6aa1103267ef8df8148d721032cc02f195d1f038055bae5f58e2c037/export_2025_5.pdf",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xad8019778d94882c07131683d605e1516307260c18a48e7a7b412f73eaa0fe46",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@41da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814e/60959c773ef7atAY.jpg",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xad864d09ed496e7bc063c0687e32a35baa848818c6f668ccfe49ea07e2f5728a",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@520b3fac78e6eb02d9f3f24a860b8581b0614c8ac365a7224bcde47ef497c8a2/images (258).jpeg",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xad9cf0918b6d183e0a07a23b829a9547fd33bdb13092c34a5908c9ac63057d6e",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@9333ae53885618ba99f9babd6e5ed987c58d31a580f65a8b71c3e8d08937476c/29f540d4ed3f5a8d5aa021d8eef0f61a.png",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xada6af280943586f7724b8388b2970e6887ef974278ff987e1255c99bf580298",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@3134d6671f572138b199adc5f9ba66243479b434635a78fc6da05afec79bd1c9/auto/manual/23_1770607531.json",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xadceb2aab336fcaf2903a0c17103842964c6bef1844fd773d910d1ba45a8a28e",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@a3ab0583db4252516e8c1cbbde5be210101ba79da5d0bc326594adc2e0da075d/85089881cc3958a364a98a.gif",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xadec8a6cab1981df539c4f6d21d292bbf6241986747f99b375e7cd954e3a1d07",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@53bfcdb05da3555d72a1284814d38d73c7aab2755be6bb234e6d54f45fa78b87/436d8cf0c700991f5a49444125.zip",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xadf811bc5629b77f5560a7928be43499763963923760f5d6acbdf748f46e62c1",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@50db8d59579e77f63cbb04345c5ef9577dea89f43bf8d59d4946ffea860fbb09/7f83508e68dad0752c73.dat",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xae017675ae20d9897bf0ff27f1f4a7ee0b9ac607b98e0a6477e0b48f22500608",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@cc78154fa54de4a5e44164e7bad10f9bd77a58b1fea06d74c17c6ebabc4ae49d/8e3ce016e87be46a037dfc88c8e10506.txt",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xae10dee02e798e52b39aba9e4997b070f3922ff8955880eabbc27de2c48602fa",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@e5b617ebf4717f161a536d203fcd885ad96a56cd38f926b6c20863306a971d7f/7fdae1f023c63269.bin",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xae17fa7de59d3a4c3e8b4ebb2a0f379b5c01e24938c0b3bbb9b33efb40b1689a",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@075db8d6341984906cc1e671fe804f9f3cd716bdd22316050d38101ee661e8d0/c88c9d22d110.mp4",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xae2918a6b425b17e964867d1807d8206b6c97ffdd417d36adb0674b4551b9ccc",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@3c9f89402179264216d893e1f87fb12b834e4630928bab8eb3c236dbc9b19d67/IMG_20263324.csv",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xae350e1a4e03eff667bdc52ac6df0c746eb51f79625491f027807c670f21f842",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@8b6e1ed4c4fee83fabfe31692af4a8fd8230f02d1c1d72a08f4808fa23f0d210/0b952b6b97312b0a.gif",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xae41bff46dee71a55a0fec347b8b30657d96fcac2566b7eaec61a35d9e1e9b8b",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@00f5ca90b6aeda5ad625b823d82880c261ef1b6f87188167e65727515cfd2dde/Screenshot 2023-12-16 234447.png",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xae4286a48b914cc6f3b9aedee37c89f60f9d1ca9766c4682ef1f008b90b8b33b",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@5db8bbfce332dc9ee1f620b55c8f0d084d9232a2df94eff8c4009b41896a2767/580b55eda0ed8c8061e00abfbba178a534.zip",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xae6012dd6d1075d99554ad895265fd53fe4c45cc3a2fb5c761296561091c470f",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@9f7f4d4854b8b3dd74a1d305fe059b53899203e07ad6f61d953e1c796cad686a/b4672c2971f375a95b327424.bin",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xae669fcd72cfb91d6a12735d18a3f5ebc1aede9cbbc748d2ccf04515ed1acbfc",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@dda71dd8386acb79ace270e0ec40a95ea1b1563b0b8e0cbbf23b5adab56122b8/a2abcf7009a5c7feb7ef748afa16b336c3.zip",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xae71d6ec7a4a10db43489aeefa072ec27ecd2ed4ff591d64d1d5367aef5413cc",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@0c0bc301ff61efbabbbe627e94f1f0f07539ed7655e94daa072f2551cfdb230e/435555.png",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xae819ca91c7b84b06f359f001585cb216e099fc59221ec6ac4dbf4c24902fffd",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@90f870ebf5891a5b7835f02ba53fbc265ade292b2e3cdcfd5497d558896ee7ec/files/yhowqnbgutb4.dat",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xae821964646efde466b8f3753035832045fd963988432efa0dbd2f362a38627a",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@214529d04a6e117e61531160b2b73ea43f9efc2e224a9fc340c9ad8b7272104f/d5a95ffbce24a42913140224a92e3b.zip",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xae846cf0246a0cf41dc3c78aa905442b0e06b6f744506fbb99b0270dfcfac57e",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@ea3aaaa5106905136149d34661d1b680a13f4b134c39730ba4b18125cde93a6d/88293185ce5c3303eeb7af5b1154.bin",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xae9445e766b361df23493b6609f095b453a2f62b8e48c3f6b850d4b7dd9b13e8",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@4158d06315a4cef9bd4f59f7d63f2b9e733131497719de868a86258ffcf3c402/359eace6dc4e3dd17f.gif",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xae9f911ce92931bc0c3cfa4011cdc33b228e4744e103844f86dd6e628c4a4b7a",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@7712991af7aed2e0cfe30192b9b52dc75e3059328da9d7a682433dad55e7f0d2/bb8a947a3f9e9422c06f.log",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xaea8d8f463d61bb503b053b3554c8925b65c471bc9277c3e1423166711de7696",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@3c60494c39df7fa1922b0d82eca7220e529cf49f1c74683202bf824b4c97f6c6/SAZopy (5).jpg",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "0xaeaf4b2ba9d0fd044ab4fd3ea2e02e79d019e79546df7768435e18de2c342a4e",
+                                        "value": {
+                                            "__variant__": "Leaf",
+                                            "value": {
+                                                "blob_name": "@0cd37cf1971e30b7ae943e2ce0111b667923f97629a90a5ae4a08bde80407338/c1b519cc2786c8c8a3ab29.json",
+                                                "num_chunksets": 1
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            "is_leaf": true,
+                            "next": "141",
+                            "prev": "89"
+                        }
+                    },
+                    "value_type": "0x1::storage_slots_allocator::Link<0x1::big_ordered_map::Node<vector<u8>, 0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::slice::BlobInfo>>"
+                },
+                "type": "write_table_item"
+            }
+        ],
+        "sender": "0x41da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814e",
+        "sequence_number": "31",
+        "max_gas_amount": "2000000",
+        "gas_unit_price": "100",
+        "expiration_timestamp_secs": "1770626624",
+        "payload": {
+            "function": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::blob_metadata::register_multiple_blobs",
+            "type_arguments": [],
+            "arguments": [
+                [
+                    "60959c773ef7atAY.jpg"
+                ],
+                "1773218541049000",
+                [
+                    "0x50bab76aeebcea8eaf7d5f17617016b9338c602092e621793b4be750b61f16f3"
+                ],
+                [
+                    1
+                ],
+                [
+                    "33755"
+                ],
+                0,
+                0
+            ],
+            "type": "entry_function_payload"
+        },
+        "signature": {
+            "type": "single_sender"
+        },
+        "replay_protection_nonce": null,
+        "events": [
+            {
+                "guid": {
+                    "creation_number": "0",
+                    "account_address": "0x0"
+                },
+                "sequence_number": "0",
+                "type": "0x1::randomness::RandomnessGeneratedEvent",
+                "data": {
+                    "dummy_field": false
+                }
+            },
+            {
+                "guid": {
+                    "creation_number": "0",
+                    "account_address": "0x0"
+                },
+                "sequence_number": "0",
+                "type": "0x1::fungible_asset::Withdraw",
+                "data": {
+                    "amount": "1680",
+                    "store": "0x8f72ef0524a9d492fc37e4e1c32d572c48fe2bf762e2b1f852dd4bbefed11772"
+                }
+            },
+            {
+                "guid": {
+                    "creation_number": "0",
+                    "account_address": "0x0"
+                },
+                "sequence_number": "0",
+                "type": "0x1::fungible_asset::Deposit",
+                "data": {
+                    "amount": "1680",
+                    "store": "0x83acaf6f729f18cf55dcf02ebf83e40ecb655c7453dcf850421ec2a8d08174cc"
+                }
+            },
+            {
+                "guid": {
+                    "creation_number": "0",
+                    "account_address": "0x0"
+                },
+                "sequence_number": "0",
+                "type": "0x1::fungible_asset::Withdraw",
+                "data": {
+                    "amount": "21840",
+                    "store": "0x8f72ef0524a9d492fc37e4e1c32d572c48fe2bf762e2b1f852dd4bbefed11772"
+                }
+            },
+            {
+                "guid": {
+                    "creation_number": "0",
+                    "account_address": "0x0"
+                },
+                "sequence_number": "0",
+                "type": "0x1::fungible_asset::Deposit",
+                "data": {
+                    "amount": "21840",
+                    "store": "0xcde61d1a6b8310db489e3acb820deae21c20b6f37eac80adea5be391afbdc371"
+                }
+            },
+            {
+                "guid": {
+                    "creation_number": "0",
+                    "account_address": "0x0"
+                },
+                "sequence_number": "0",
+                "type": "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5::blob_metadata::BlobRegisteredEvent",
+                "data": {
+                    "blob_commitment": "0x50bab76aeebcea8eaf7d5f17617016b9338c602092e621793b4be750b61f16f3",
+                    "blob_name": "@41da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814e/60959c773ef7atAY.jpg",
+                    "blob_size": "33755",
+                    "chunkset_count": 1,
+                    "creation_micros": "1770626606030276",
+                    "encoding": {
+                        "__variant__": "ClayCode_16Total_10Data_13Helper"
+                    },
+                    "expiration_micros": "1773218541049000",
+                    "owner": "0x41da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814e",
+                    "payment_tier_id": 0,
+                    "placement_group_address": "0xf94299333c6fcf1a93522b6f73ffde9554ca44e5a2a4e7f1ba676d27352a6e45",
+                    "slice_address": "0xe29f6354a5d2206b70dbf44351f5775843ab558955fd5c8d8ebd9bd3f7ee35ad"
+                }
+            },
+            {
+                "guid": {
+                    "creation_number": "0",
+                    "account_address": "0x0"
+                },
+                "sequence_number": "0",
+                "type": "0x1::transaction_fee::FeeStatement",
+                "data": {
+                    "execution_gas_units": "20",
+                    "io_gas_units": "41",
+                    "storage_fee_octas": "53320",
+                    "storage_fee_refund_octas": "0",
+                    "total_charge_gas_units": "593"
+                }
+            }
+        ],
+        "timestamp": "1770626606030276"
+    }
+]
+
+请求网址:
+https://api.shelbynet.shelby.xyz/v1/transactions/simulate?estimate_gas_unit_price=true&estimate_max_gas_amount=true&estimate_prioritized_gas_unit_price=false
+请求方法:
+POST
+状态代码:
+200 OK
+
+钱包验证交易请求：
+请求网址:
+https://api.shelbynet.shelby.xyz/v1/transactions/by_hash/0xbbdf0a6437eee2a812aaf9e336ebf204bc114603f7aabc785b28545cbf8afea3
+请求方法:
+GET
+状态代码:
+200 OK
+
+请求网址:
+https://api.shelbynet.shelby.xyz/shelby/v1/multipart-uploads
+请求方法:
+POST
+状态代码:
+200 OK
+{
+    "rawAccount": "0x41da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814e",
+    "rawBlobName": "60959c773ef7atAY.jpg",
+    "rawPartSize": 5242880
+}
+{
+    "uploadId": "cbef78ed-de23-4804-bcb3-d2210f8585a9"
+}
+请求网址:
+https://api.shelbynet.shelby.xyz/shelby/v1/multipart-uploads/cbef78ed-de23-4804-bcb3-d2210f8585a9/parts/0
+请求方法:
+PUT
+状态代码:
+200 OK
+{
+    "success": true
+}
+请求网址:
+https://api.shelbynet.shelby.xyz/shelby/v1/multipart-uploads/cbef78ed-de23-4804-bcb3-d2210f8585a9/complete
+请求方法:
+POST
+状态代码:
+200 OK
+{
+    "success": true
+}

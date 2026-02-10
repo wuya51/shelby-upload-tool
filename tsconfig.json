@@ -18,7 +18,7 @@
 		"isolatedModules": true,
 		"noEmit": false,
 		"lib": ["ES2022", "DOM"],
-		"types": ["node", "vitest/globals"]
+		"types": ["node"]
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules", "dist", "**/*.test.ts"]
