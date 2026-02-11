@@ -648,7 +648,7 @@ function UploadPage({ signAndSubmitTransaction }) {
                   <div className="space-y-2">
                     <p className="text-sm text-gray-600"><span className="font-medium">File:</span> {uploadData?.fileSize} bytes</p>
                     <p className="text-sm text-gray-600"><span className="font-medium">Blob Name:</span> {uploadData?.uniqueBlobName}</p>
-                    <p className="text-sm text-gray-600"><span className="font-medium">Expiration:</span> {uploadData?.expirationMicros ? new Date(uploadData.expirationMicros / 1000).toLocaleString() : 'N/A'}</p>
+                    <p className="text-sm text-gray-600"><span className="font-medium">Upload Time:</span> {new Date().toLocaleString('en-US')}</p>
                   </div>
                 </div>
 
