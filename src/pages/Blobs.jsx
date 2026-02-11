@@ -11,6 +11,13 @@ function Blobs() {
   const [blobs, setBlobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentBlobs = blobs.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(blobs.length / itemsPerPage);
 
   const parseAddress = (address) => {
     if (!address) return null;
@@ -153,162 +160,194 @@ function Blobs() {
                 <p className="text-gray-600 text-lg">No files uploaded yet</p>
               </div>
             ) : (
-              <div className="space-y-4 mb-8">
-                {blobs.map((blob, index) => {
-                  const fileName = blob.name.split('/').pop() || blob.name;
-                  const correctAccountAddress = blob.accountAddress;
-                  const blobFileName = blob.name.split('/').pop() || blob.name;
-                  const correctBlobName = blob.name.includes('/') ? blob.name.replace('@', '0x') : `${correctAccountAddress}/${blobFileName}`;
-                  
-                  const fileSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+              <>
+                <div className="space-y-4 mb-8">
+                  {currentBlobs.map((blob, index) => {
+                    const fileName = blob.name.split('/').pop() || blob.name;
+                    const correctAccountAddress = blob.accountAddress;
+                    const blobFileName = blob.name.split('/').pop() || blob.name;
+                    const correctBlobName = blob.name.includes('/') ? blob.name.replace('@', '0x') : `${correctAccountAddress}/${blobFileName}`;
+                    
+                    const fileSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
 
-                  const processMerkleRoot = (merkleRoot) => {
-                    if (!merkleRoot) return 'N/A';
+                    const processMerkleRoot = (merkleRoot) => {
+                      if (!merkleRoot) return 'N/A';
+                      
+                      if (typeof merkleRoot === 'string') {
+                        return merkleRoot;
+                      }
+                      
+                      if (typeof merkleRoot === 'object') {
+                        if (merkleRoot.data && typeof merkleRoot.data === 'object') {
+                          const data = merkleRoot.data;
+                          const keys = Object.keys(data).map(Number).sort((a, b) => a - b);
+                          return '0x' + keys.map(key => {
+                            const value = data[key];
+                            return (typeof value === 'number' ? value : parseInt(value)).toString(16).padStart(2, '0');
+                          }).join('');
+                        } else {
+                          const keys = Object.keys(merkleRoot).map(Number).sort((a, b) => a - b);
+                          return '0x' + keys.map(key => {
+                            const value = merkleRoot[key];
+                            return (typeof value === 'number' ? value : parseInt(value)).toString(16).padStart(2, '0');
+                          }).join('');
+                        }
+                      }
+                      
+                      return JSON.stringify(merkleRoot);
+                    };
                     
-                    if (typeof merkleRoot === 'string') {
-                      return merkleRoot;
-                    }
+                    const processedMerkleRoot = processMerkleRoot(blob.blobMerkleRoot);
                     
-                    if (typeof merkleRoot === 'object') {
-                      if (merkleRoot.data && typeof merkleRoot.data === 'object') {
-                        const data = merkleRoot.data;
-                        const keys = Object.keys(data).map(Number).sort((a, b) => a - b);
-                        return '0x' + keys.map(key => {
-                          const value = data[key];
-                          return (typeof value === 'number' ? value : parseInt(value)).toString(16).padStart(2, '0');
-                        }).join('');
+                    const isZeroMerkleRoot = processedMerkleRoot === '0x0000000000000000000000000000000000000000000000000000000000000000';
+                    
+                    let status = blob.status;
+                    if (!status) {
+                      if (isZeroMerkleRoot) {
+                        status = 'Pending';
+                      } else if (new Date(blob.expirationMicros / 1000) < new Date()) {
+                        status = 'Expired';
                       } else {
-                        const keys = Object.keys(merkleRoot).map(Number).sort((a, b) => a - b);
-                        return '0x' + keys.map(key => {
-                          const value = merkleRoot[key];
-                          return (typeof value === 'number' ? value : parseInt(value)).toString(16).padStart(2, '0');
-                        }).join('');
+                        status = 'Active';
                       }
                     }
                     
-                    return JSON.stringify(merkleRoot);
-                  };
-                  
-                  const processedMerkleRoot = processMerkleRoot(blob.blobMerkleRoot);
-                  
-                  const isZeroMerkleRoot = processedMerkleRoot === '0x0000000000000000000000000000000000000000000000000000000000000000';
-                  
-                  let status = blob.status;
-                  if (!status) {
-                    if (isZeroMerkleRoot) {
-                      status = 'Pending';
-                    } else if (new Date(blob.expirationMicros / 1000) < new Date()) {
-                      status = 'Expired';
-                    } else {
-                      status = 'Active';
-                    }
-                  }
-                  
-                  const isExpired = new Date(blob.expirationMicros / 1000) < new Date();
-                  
-                  return (
-                    <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3 transition-transform duration-200 hover:shadow-md hover:-translate-y-1">
-                      <div className="flex flex-wrap items-center justify-between mb-2 gap-2">
-                        <h3 className="text-lg font-medium text-gray-800 break-all flex-1 min-w-0">
-                          {fileName}
-                        </h3>
-                        <a 
-                          href={`${getShelbyApiUrl()}/shelby/v1/blobs/${correctBlobName}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="bg-primary hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-md transition-colors duration-200 text-xs whitespace-nowrap"
-                        >
-                          Download
-                        </a>
-                      </div>
-                      
-                      <div className="flex flex-wrap items-center gap-4 text-sm mb-4">
-                        <span>
-                          <strong className="text-gray-700">Size:</strong>
-                          <span className="text-gray-800 ml-1">{fileSizeMB} MB</span>
-                        </span>
-                        <span>
-                          <strong className="text-gray-700">Status:</strong>
-                          <span className={`
-                          ${status === 'Active' ? 'bg-green-100 text-green-800' : 
-                            status === 'Expired' ? 'bg-red-100 text-red-800' : 
-                            status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
-                            'bg-gray-100 text-gray-800'
-                          } px-2 py-0.5 rounded-full text-xs font-medium ml-1
-                        `}>
-                          {status}
-                        </span>
-                        </span>
-                      </div>
-                      
-                      <div className="space-y-3 text-xs">
-                        <div className="flex items-start flex-wrap">
-                          <strong className="text-gray-700">Blob Merkle Root:</strong>
-                          <span className="text-gray-800 ml-1 flex-1 min-w-0 whitespace-nowrap overflow-x-auto">
-                            {processedMerkleRoot}
+                    const isExpired = new Date(blob.expirationMicros / 1000) < new Date();
+                    
+                    return (
+                      <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3 transition-transform duration-200 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex flex-wrap items-center justify-between mb-2 gap-2">
+                          <h3 className="text-lg font-medium text-gray-800 break-all flex-1 min-w-0">
+                            {fileName}
+                          </h3>
+                          <a 
+                            href={`${getShelbyApiUrl()}/shelby/v1/blobs/${correctBlobName}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="bg-primary hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-md transition-colors duration-200 text-xs whitespace-nowrap"
+                          >
+                            Download
+                          </a>
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-4 text-sm mb-4">
+                          <span>
+                            <strong className="text-gray-700">Size:</strong>
+                            <span className="text-gray-800 ml-1">{fileSizeMB} MB</span>
+                          </span>
+                          <span>
+                            <strong className="text-gray-700">Status:</strong>
+                            <span className={`
+                            ${status === 'Active' ? 'bg-green-100 text-green-800' : 
+                              status === 'Expired' ? 'bg-red-100 text-red-800' : 
+                              status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
+                              'bg-gray-100 text-gray-800'
+                            } px-2 py-0.5 rounded-full text-xs font-medium ml-1
+                          `}>
+                            {status}
+                          </span>
                           </span>
                         </div>
                         
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div className="space-y-3">
-                            <div>
-                              <strong className="text-gray-700">Chunk Size:</strong>
-                              <span className="text-gray-800 ml-1">
-                                {blob.chunkSizeBytes ? 
-                                  `${(blob.chunkSizeBytes / (1024 * 1024)).toFixed(0)} MB`
-                                : 'N/A'
-                                }
-                              </span>
-                            </div>
-                            <div>
-                              <strong className="text-gray-700">Blob Size:</strong>
-                              <span className="text-gray-800 ml-1">{formatFileSize(blob.size)}</span>
-                            </div>
-                            <div className="flex items-center flex-wrap">
-                              <strong className="text-gray-700">Blob URL:</strong>
-                              <span className="text-gray-800 ml-1 flex-1 min-w-0">
-                                <a 
-                                  href={`${getShelbyApiUrl()}/shelby/v1/blobs/${correctBlobName}`} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-primary hover:underline flex items-center gap-1 whitespace-nowrap"
-                                  title="Download from Shelby API"
-                                >
-                                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                  </svg>
-                                  <span className="hidden sm:inline truncate">{getShelbyApiUrl()}...</span>
-                                </a>
-                              </span>
-                            </div>
+                        <div className="space-y-3 text-xs">
+                          <div className="flex items-start flex-wrap">
+                            <strong className="text-gray-700">Blob Merkle Root:</strong>
+                            <span className="text-gray-800 ml-1 flex-1 min-w-0 whitespace-nowrap overflow-x-auto">
+                              {processedMerkleRoot}
+                            </span>
                           </div>
                           
-                          <div className="space-y-3">
-                            <div>
-                              <strong className="text-gray-700">Creation:</strong>
-                              <span className="text-gray-800 ml-1">{new Date(blob.creationMicros ? blob.creationMicros / 1000 : Date.now()).toLocaleString()}</span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-3">
+                              <div>
+                                <strong className="text-gray-700">Chunk Size:</strong>
+                                <span className="text-gray-800 ml-1">
+                                  {blob.chunkSizeBytes ? 
+                                    `${(blob.chunkSizeBytes / (1024 * 1024)).toFixed(0)} MB`
+                                  : 'N/A'
+                                  }
+                                </span>
+                              </div>
+                              <div>
+                                <strong className="text-gray-700">Blob Size:</strong>
+                                <span className="text-gray-800 ml-1">{formatFileSize(blob.size)}</span>
+                              </div>
+                              <div className="flex items-center flex-wrap">
+                                <strong className="text-gray-700">Blob URL:</strong>
+                                <span className="text-gray-800 ml-1 flex-1 min-w-0">
+                                  <a 
+                                    href={`${getShelbyApiUrl()}/shelby/v1/blobs/${correctBlobName}`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-primary hover:underline flex items-center gap-1 whitespace-nowrap"
+                                    title="Download from Shelby API"
+                                  >
+                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                    <span className="hidden sm:inline truncate">{getShelbyApiUrl()}...</span>
+                                  </a>
+                                </span>
+                              </div>
                             </div>
-                            <div>
-                              <strong className="text-gray-700">Expiration:</strong>
-                              <span className="text-gray-800 ml-1">{new Date(blob.expirationMicros / 1000).toLocaleString()}</span>
-                            </div>
-                            <div>
-                              <strong className="text-gray-700">Encoding:</strong>
-                              <span className="text-gray-800 ml-1">
-                                {blob.encoding ? 
-                                  `${blob.encoding.variant || 'clay'} • n=${blob.encoding.erasure_n || '16'} • k=${blob.encoding.erasure_k || '10'}`
-                                : 'N/A'
-                                }
-                              </span>
+                            
+                            <div className="space-y-3">
+                              <div>
+                                <strong className="text-gray-700">Creation:</strong>
+                                <span className="text-gray-800 ml-1">{new Date(blob.creationMicros ? blob.creationMicros / 1000 : Date.now()).toLocaleString()}</span>
+                              </div>
+                              <div>
+                                <strong className="text-gray-700">Expiration:</strong>
+                                <span className="text-gray-800 ml-1">{new Date(blob.expirationMicros / 1000).toLocaleString()}</span>
+                              </div>
+                              <div>
+                                <strong className="text-gray-700">Encoding:</strong>
+                                <span className="text-gray-800 ml-1">
+                                  {blob.encoding ? 
+                                    `${blob.encoding.variant || 'clay'} • n=${blob.encoding.erasure_n || '16'} • k=${blob.encoding.erasure_k || '10'}`
+                                  : 'N/A'
+                                  }
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+                
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center space-x-2 mt-8 mb-4">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-1 rounded-md ${currentPage === page ? 'bg-primary text-white' : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
             )}
             
             <div className="flex justify-center">
