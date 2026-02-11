@@ -12,12 +12,46 @@ function Blobs() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [fileType, setFileType] = useState('all');
   const itemsPerPage = 10;
+
+  const fileTypes = [
+    { value: 'all', label: 'All Files' },
+    { value: 'image', label: 'Images' },
+    { value: 'video', label: 'Videos' },
+    { value: 'audio', label: 'Audio' },
+    { value: 'document', label: 'Documents' },
+    { value: 'archive', label: 'Archives' },
+    { value: 'other', label: 'Other' }
+  ];
+
+  const getFileType = (fileName) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    if (!extension) return 'other';
+    
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension)) {
+      return 'image';
+    } else if (['mp4', 'webm', 'ogg', 'avi', 'mov', 'wmv', 'flv', 'mkv'].includes(extension)) {
+      return 'video';
+    } else if (['mp3', 'wav', 'ogg', 'flac', 'aac', 'wma'].includes(extension)) {
+      return 'audio';
+    } else if (['pdf', 'doc', 'docx', 'txt', 'md', 'html', 'css', 'js', 'json', 'xml', 'csv', 'xlsx', 'xls', 'ppt', 'pptx'].includes(extension)) {
+      return 'document';
+    } else if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(extension)) {
+      return 'archive';
+    } else {
+      return 'other';
+    }
+  };
+
+  const filteredBlobs = fileType === 'all' 
+    ? blobs 
+    : blobs.filter(blob => getFileType(blob.name) === fileType);
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentBlobs = blobs.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(blobs.length / itemsPerPage);
+  const currentBlobs = filteredBlobs.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredBlobs.length / itemsPerPage);
 
   const parseAddress = (address) => {
     if (!address) return null;
@@ -157,7 +191,27 @@ function Blobs() {
 
         <main>
           <section className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6 pb-3 border-b-2 border-gray-100">Uploaded Files ({blobs.length})</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 pb-3 border-b-2 border-gray-100">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4 sm:mb-0">Uploaded Files ({filteredBlobs.length})</h2>
+              <div className="flex items-center space-x-2">
+                <label htmlFor="fileType" className="text-gray-700 font-medium">Filter by type:</label>
+                <select
+                  id="fileType"
+                  value={fileType}
+                  onChange={(e) => {
+                    setFileType(e.target.value);
+                    setCurrentPage(1); // Reset to first page when changing filter
+                  }}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {fileTypes.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
             
             {loading ? (
               <div className="flex items-center justify-center py-12">
