@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { BrowserRouter as Router, Routes, Link, Route } from 'react-router-dom';
 import { Aptos, AptosConfig, Network, AccountAddress } from "@aptos-labs/ts-sdk";
@@ -735,7 +735,7 @@ function UploadPage({ signAndSubmitTransaction }) {
                           </svg>
                           <div className="flex justify-between items-center w-full">
                             <span className="text-sm font-medium text-gray-700">Network</span>
-                            <div className="flex items-center overflow-visible z-500 relative">
+                            <div className="flex items-center overflow-visible">
                               {network?.name === 'custom' && (
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-green-600 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -836,6 +836,9 @@ function App() {
   const [showConnectMenu, setShowConnectMenu] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('info');
+  const isHoveringButtonRef = useRef(false);
+  const isHoveringMenuRef = useRef(false);
+  const menuTimerRef = useRef(null);
 
   const showMessage = (text, type = 'info') => {
     setMessage(text);
@@ -867,23 +870,84 @@ function App() {
     }
   };
 
+  const handleButtonMouseEnter = () => {
+    isHoveringButtonRef.current = true;
+    if (menuTimerRef.current) {
+      clearTimeout(menuTimerRef.current);
+      menuTimerRef.current = null;
+    }
+  };
+
+  const handleButtonMouseLeave = () => {
+    isHoveringButtonRef.current = false;
+    setTimeout(() => {
+      if (!isHoveringButtonRef.current && !isHoveringMenuRef.current) {
+        setShowConnectMenu(false);
+      }
+    }, 200);
+  };
+
+  const handleMenuMouseEnter = () => {
+    isHoveringMenuRef.current = true;
+    if (menuTimerRef.current) {
+      clearTimeout(menuTimerRef.current);
+      menuTimerRef.current = null;
+    }
+  };
+
+  const handleMenuMouseLeave = () => {
+    isHoveringMenuRef.current = false;
+    setTimeout(() => {
+      if (!isHoveringButtonRef.current && !isHoveringMenuRef.current) {
+        setShowConnectMenu(false);
+      }
+    }, 200);
+  };
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (showConnectMenu) {
         setShowConnectMenu(false);
+        if (menuTimerRef.current) {
+          clearTimeout(menuTimerRef.current);
+          menuTimerRef.current = null;
+        }
       }
     };
 
     document.addEventListener('click', handleClickOutside);
     return () => {
       document.removeEventListener('click', handleClickOutside);
+      if (menuTimerRef.current) {
+        clearTimeout(menuTimerRef.current);
+        menuTimerRef.current = null;
+      }
+    };
+  }, [showConnectMenu]);
+
+  useEffect(() => {
+    if (showConnectMenu) {
+      if (menuTimerRef.current) {
+        clearTimeout(menuTimerRef.current);
+        menuTimerRef.current = null;
+      }
+      menuTimerRef.current = setTimeout(() => {
+        setShowConnectMenu(false);
+        menuTimerRef.current = null;
+      }, 3000);
+    }
+    return () => {
+      if (menuTimerRef.current) {
+        clearTimeout(menuTimerRef.current);
+        menuTimerRef.current = null;
+      }
     };
   }, [showConnectMenu]);
 
   return (
     <Router>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative z-1">
-        <nav className="bg-white shadow-md z-400 relative">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <nav className="bg-white shadow-md relative">
           <div className="max-w-4xl mx-auto px-4 overflow-visible">
             {message && (
               <div className={`mt-2 mb-2 p-4 rounded-lg ${messageType === 'error' ? 'bg-red-50 border border-red-200 text-red-800' : messageType === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-blue-50 border border-blue-200 text-blue-800'}`}>
@@ -891,69 +955,76 @@ function App() {
               </div>
             )}
             <div className="flex justify-between min-h-16 overflow-visible">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 flex items-center">
-                  <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
-                    <img src="/logo.png" alt="Logo" className="w-full h-full object-cover rounded-full" />
+              <div className="flex items-center flex-1">
+                <div className="flex items-center space-x-6">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
+                      <img src="/logo.png" alt="Logo" className="w-full h-full object-cover rounded-full" />
+                    </div>
+                    <span className="font-bold text-xl text-gray-900 whitespace-nowrap hidden sm:inline">Shelby Upload Tool</span>
                   </div>
-                  <span className="font-bold text-xl text-gray-900">Shelby Upload Tool</span>
-                </div>
-                <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                  <div className="flex space-x-4">
                   <Link 
                     to="/" 
-                    className="border-transparent text-gray-500 hover:bg-gray-50 hover:text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                    className="text-gray-700 hover:text-blue-600 inline-flex items-center px-3 py-2 border-b-2 border-transparent hover:border-blue-500 text-sm font-medium transition-colors duration-200"
                   >
-                    Upload
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <span className="hidden md:inline">Upload</span>
                   </Link>
                   <Link 
                     to="/blobs" 
-                    className="border-transparent text-gray-500 hover:bg-gray-50 hover:text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                    className="text-gray-700 hover:text-blue-600 inline-flex items-center px-3 py-2 border-b-2 border-transparent hover:border-blue-500 text-sm font-medium transition-colors duration-200"
                   >
-                    My Blobs
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span className="hidden md:inline">My Blobs</span>
                   </Link>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center overflow-visible z-500 relative">
+              <div className="flex items-center overflow-visible relative">
                 {connected ? (
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-white rounded-lg p-3 flex items-center space-x-3 shadow-sm">
-                      <div>
-                        <div className="text-xs font-medium text-gray-700 font-mono">
-                          {account?.address ? (
-                            (() => {
-                              const parsedAddress = parseAddress(account.address);
-                              return parsedAddress ? `${parsedAddress.slice(0, 6)}...${parsedAddress.slice(-4)}` : 'Invalid Address';
-                            })()
-                          ) : 'Unknown Address'}
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={disconnect}
-                      className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white font-medium rounded-lg transition-all duration-300 hover:shadow-lg hover:from-red-700 hover:to-red-800 transform hover:-translate-y-1"
-                    >
-                      Disconnect
-                    </button>
-                  </div>
+                  <button
+                    onClick={disconnect}
+                    className="bg-gradient-to-r from-green-600 to-green-700 text-white font-medium px-4 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 hover:shadow-lg hover:from-green-700 hover:to-green-800 transform hover:-translate-y-1"
+                  >
+                    <span className="text-sm font-mono">
+                      {account?.address ? (
+                        (() => {
+                          const parsedAddress = parseAddress(account.address);
+                          return parsedAddress ? `${parsedAddress.slice(0, 6)}...${parsedAddress.slice(-4)}` : 'Invalid Address';
+                        })()
+                      ) : 'Unknown Address'}
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                  </button>
                 ) : (
-                  <div className="relative overflow-visible z-500">
+                  <div className="relative overflow-visible">
                     <button 
                       className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg flex items-center space-x-2 transition-all duration-300 hover:shadow-lg hover:from-blue-700 hover:to-blue-800 transform hover:-translate-y-1"
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowConnectMenu(!showConnectMenu);
                       }}
+                      onMouseEnter={handleButtonMouseEnter}
+                      onMouseLeave={handleButtonMouseLeave}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
                       <span>Connect Wallet</span>
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
                     {showConnectMenu && (
-                      <div className="absolute right-0 top-full mt-2 w-64 bg-gray-800 rounded-lg shadow-xl z-9999 border border-gray-700 md:w-56 transform translate-y-0">
+                      <div 
+                        className="absolute right-0 top-full mt-2 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 md:w-56"
+                        onMouseEnter={handleMenuMouseEnter}
+                        onMouseLeave={handleMenuMouseLeave}
+                      >
                         <div className="py-2">
                           <div className="px-4 py-2 border-b border-gray-700">
                             <p className="text-xs font-semibold text-gray-400 uppercase">Select Wallet</p>
@@ -1002,7 +1073,7 @@ function App() {
           </div>
         </nav>
 
-        <main className="relative z-10">
+        <main>
           <Routes>
             <Route path="/" element={<UploadPage signAndSubmitTransaction={signAndSubmitTransaction || (() => Promise.reject(new Error('signAndSubmitTransaction is not available')))} />} />
             <Route path="/blobs" element={<Blobs />} />

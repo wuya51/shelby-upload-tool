@@ -12,7 +12,6 @@ export default defineConfig({
     open: true,
     historyApiFallback: {
       disableDotRule: true,
-      // 确保 .wasm 文件不被历史回退处理
       rewrites: [
         {
           from: /^.*\.wasm$/,
@@ -20,26 +19,19 @@ export default defineConfig({
         }
       ]
     },
-    // 添加中间件确保 .wasm 文件有正确的 Content-Type 和路径处理
     middleware: [(req, res, next) => {
-      // 处理所有 .wasm 文件请求
       if (req.url.includes('.wasm')) {
         console.log('Handling .wasm request:', req.url);
         
-        // 尝试从多个可能的路径提供 wasm 文件
         const wasmPaths = [
-          // 检查构建输出目录中的 wasm 文件
           path.resolve(__dirname, 'dist', 'assets', 'clay.wasm'),
-          // 检查项目依赖中的 wasm 文件
           path.resolve(__dirname, 'node_modules', '@shelby-protocol', 'clay-codes', 'dist', 'clay.wasm'),
           path.resolve(__dirname, 'node_modules', '@shelby-protocol', 'sdk', 'dist', 'browser', 'clay.wasm'),
           path.resolve(__dirname, 'node_modules', '@shelby-protocol', 'sdk', 'dist', 'clay.wasm'),
-          // 检查其他可能的位置
           path.resolve(__dirname, 'public', 'clay.wasm'),
           path.resolve(__dirname, 'src', 'clay.wasm')
         ];
         
-        // 尝试找到存在的 wasm 文件
         let foundPath = null;
         for (const wasmPath of wasmPaths) {
           if (fs.existsSync(wasmPath)) {
@@ -72,28 +64,25 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['buffer'],
-    // 禁用对 @shelby-protocol/sdk 的依赖优化
     exclude: ['@shelby-protocol/sdk']
   },
   envDir: './',
   build: {
-    target: 'es2020', // 支持 BigInt 等 WASM 相关特性
+    target: 'es2020',
     rollupOptions: {
       output: {
         manualChunks: {
           'aptos-sdk': ['@aptos-labs/ts-sdk'],
           'wallet-adapter': ['@aptos-labs/wallet-adapter-core', '@aptos-labs/wallet-adapter-react']
         },
-        // 为 WASM 文件禁用哈希命名
         assetFileNames: (assetInfo) => {
           if (assetInfo.name && assetInfo.name.endsWith('.wasm')) {
-            return 'assets/[name].wasm'; // 保持原始文件名，禁用哈希
+            return 'assets/[name].wasm';
           }
-          return 'assets/[name]-[hash][extname]'; // 其他资源保持哈希命名
+          return 'assets/[name]-[hash][extname]';
         }
       }
     }
   },
-  // 配置 WebAssembly 加载
   assetsInclude: ['**/*.wasm']
 })
