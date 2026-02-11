@@ -884,13 +884,13 @@ function App() {
     <Router>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <nav className="bg-white shadow-md z-400">
-          <div className="max-w-4xl mx-auto px-4">
+          <div className="max-w-4xl mx-auto px-4 overflow-visible">
             {message && (
               <div className={`mt-2 mb-2 p-4 rounded-lg ${messageType === 'error' ? 'bg-red-50 border border-red-200 text-red-800' : messageType === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-blue-50 border border-blue-200 text-blue-800'}`}>
                 {message}
               </div>
             )}
-            <div className="flex justify-between h-16">
+            <div className="flex justify-between h-16 overflow-visible">
               <div className="flex items-center">
                 <div className="flex-shrink-0 flex items-center">
                   <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
@@ -936,7 +936,7 @@ function App() {
                     </button>
                   </div>
                 ) : (
-                  <div className="relative">
+                  <div className="relative overflow-visible">
                     <button 
                       className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg flex items-center space-x-2 transition-all duration-300 hover:shadow-lg hover:from-blue-700 hover:to-blue-800 transform hover:-translate-y-1"
                       onClick={(e) => {
