@@ -963,25 +963,39 @@ function App() {
                           <div className="px-4 py-2 border-b border-gray-700">
                             <p className="text-xs font-semibold text-gray-400 uppercase">Select Wallet</p>
                           </div>
-                          {wallets.map((wallet) => {
-                            if (wallet.name.toLowerCase().includes('google') || wallet.name.toLowerCase().includes('apple')) {
-                              return null;
-                            }
-                            return (
-                              <button
-                                key={wallet.name}
-                                onClick={() => handleConnect(wallet.name)}
-                                className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                          {wallets.filter(wallet => !wallet.name.toLowerCase().includes('google') && !wallet.name.toLowerCase().includes('apple')).length === 0 ? (
+                            <div className="px-4 py-6 text-center">
+                              <p className="text-sm text-gray-400 mb-4">No wallets detected</p>
+                              <a 
+                                href="https://petra.app/" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="inline-block px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
                               >
-                                <div className="flex items-center space-x-3">
-                                  <div className="w-6 h-6 rounded-full overflow-hidden">
-                                    <img src={wallet.icon} alt={wallet.name} className="w-full h-full object-cover" />
+                                Install Petra Wallet
+                              </a>
+                            </div>
+                          ) : (
+                            wallets.map((wallet) => {
+                              if (wallet.name.toLowerCase().includes('google') || wallet.name.toLowerCase().includes('apple')) {
+                                return null;
+                              }
+                              return (
+                                <button
+                                  key={wallet.name}
+                                  onClick={() => handleConnect(wallet.name)}
+                                  className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                                >
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-6 h-6 rounded-full overflow-hidden">
+                                      <img src={wallet.icon} alt={wallet.name} className="w-full h-full object-cover" />
+                                    </div>
+                                    <span>{wallet.name}</span>
                                   </div>
-                                  <span>{wallet.name}</span>
-                                </div>
-                              </button>
-                            );
-                          })}
+                                </button>
+                              );
+                            })
+                          )}
 
                         </div>
                       </div>
