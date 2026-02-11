@@ -890,7 +890,7 @@ function App() {
                 {message}
               </div>
             )}
-            <div className="flex justify-between h-16 overflow-visible">
+            <div className="flex justify-between min-h-16 overflow-visible">
               <div className="flex items-center">
                 <div className="flex-shrink-0 flex items-center">
                   <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
@@ -953,7 +953,7 @@ function App() {
                       </svg>
                     </button>
                     {showConnectMenu && (
-                      <div className="absolute right-0 top-full mt-2 w-64 bg-gray-800 rounded-lg shadow-xl z-9999 border border-gray-700 md:w-56">
+                      <div className="absolute right-0 top-full mt-2 w-64 bg-gray-800 rounded-lg shadow-xl z-9999 border border-gray-700 md:w-56 transform translate-y-0">
                         <div className="py-2">
                           <div className="px-4 py-2 border-b border-gray-700">
                             <p className="text-xs font-semibold text-gray-400 uppercase">Select Wallet</p>
