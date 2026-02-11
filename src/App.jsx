@@ -917,11 +917,6 @@ function App() {
                 {connected ? (
                   <div className="flex items-center space-x-3">
                     <div className="bg-white rounded-lg p-3 flex items-center space-x-3 shadow-sm">
-                      <div className="bg-blue-600 rounded-full p-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </div>
                       <div>
                         <div className="text-xs font-medium text-gray-700 font-mono">
                           {account?.address ? (
