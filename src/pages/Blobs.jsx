@@ -84,18 +84,30 @@ function Blobs() {
         });
         
         const processedBlobs = blobs.map((blob) => {
+          let status = 'Pending';
+          
+          if (blob.is_written && Number(blob.is_written) === 1) {
+            status = 'Ready';
+          } else if (blob.isWritten && blob.isWritten === true) {
+            status = 'Ready';
+          } else if (blob.status === 'Ready') {
+            status = 'Ready';
+          }
+          
           return {
             name: blob.name.split('/').pop() || blob.name,
             blobName: blob.name,
             size: blob.size,
             expirationMicros: blob.expirationMicros,
-            status: blob.status,
+            status: status,
             owner: blob.owner,
             accountAddress: blob.name.includes('/') ? blob.name.split('/')[0].replace('@', '0x') : currentAccountAddress,
             blobMerkleRoot: blob.blobMerkleRoot,
             encoding: blob.encoding,
             chunkSizeBytes: blob.chunkSizeBytes || (blob.encoding ? blob.encoding.chunkSizeBytes : undefined),
-            creationMicros: blob.creationMicros
+            creationMicros: blob.creationMicros,
+            isDeleted: blob.is_deleted,
+            isWritten: blob.is_written
           };
         });
         
@@ -162,7 +174,7 @@ function Blobs() {
             ) : (
               <>
                 <div className="space-y-4 mb-8">
-                  {currentBlobs.map((blob, index) => {
+                  {currentBlobs.map((blob) => {
                     const fileName = blob.name.split('/').pop() || blob.name;
                     const correctAccountAddress = blob.accountAddress;
                     const blobFileName = blob.name.split('/').pop() || blob.name;
@@ -199,23 +211,10 @@ function Blobs() {
                     
                     const processedMerkleRoot = processMerkleRoot(blob.blobMerkleRoot);
                     
-                    const isZeroMerkleRoot = processedMerkleRoot === '0x0000000000000000000000000000000000000000000000000000000000000000';
-                    
-                    let status = blob.status;
-                    if (!status) {
-                      if (isZeroMerkleRoot) {
-                        status = 'Pending';
-                      } else if (new Date(blob.expirationMicros / 1000) < new Date()) {
-                        status = 'Expired';
-                      } else {
-                        status = 'Active';
-                      }
-                    }
-                    
-                    const isExpired = new Date(blob.expirationMicros / 1000) < new Date();
+                    const status = blob.status;
                     
                     return (
-                      <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3 transition-transform duration-200 hover:shadow-md hover:-translate-y-1">
+                      <div key={blob.name} className="bg-gray-50 border border-gray-200 rounded-lg p-3 transition-transform duration-200 hover:shadow-md hover:-translate-y-1">
                         <div className="flex flex-wrap items-center justify-between mb-2 gap-2">
                           <h3 className="text-lg font-medium text-gray-800 break-all flex-1 min-w-0">
                             {fileName}
@@ -238,8 +237,7 @@ function Blobs() {
                           <span>
                             <strong className="text-gray-700">Status:</strong>
                             <span className={`
-                            ${status === 'Active' ? 'bg-green-100 text-green-800' : 
-                              status === 'Expired' ? 'bg-red-100 text-red-800' : 
+                            ${status === 'Ready' ? 'bg-green-100 text-green-800' : 
                               status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
                               'bg-gray-100 text-gray-800'
                             } px-2 py-0.5 rounded-full text-xs font-medium ml-1
@@ -289,30 +287,56 @@ function Blobs() {
                                       </svg>
                                       <span className="hidden sm:inline truncate">{getShelbyApiUrl()}...</span>
                                     </a>
-                                    {fileName.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i) ? (
-                                      <div className="absolute z-10 hidden group-hover:block p-2 bg-white rounded-md shadow-lg border border-gray-200 -mt-4 -left-4 transform -translate-y-full">
-                                        <img 
-                                          src={`${getShelbyApiUrl()}/shelby/v1/blobs/${correctBlobName}`} 
-                                          alt={fileName} 
-                                          className="max-w-64 max-h-64 object-contain"
-                                          onError={(e) => {
-                                            e.target.parentElement.style.display = 'none';
-                                          }}
-                                        />
-                                      </div>
-                                    ) : (
-                                      <div className="absolute z-10 hidden group-hover:block p-3 bg-white rounded-md shadow-lg border border-gray-200 -mt-4 -left-4 transform -translate-y-full">
-                                        <div className="flex items-center gap-2">
-                                          <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                                          </svg>
-                                          <span className="text-sm text-gray-700">{fileName}</span>
+                                    
+                                    <div className="absolute z-50 left-0 bottom-full mb-2 hidden group-hover:block">
+                                      {fileName.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i) ? (
+                                        <div className="p-2 bg-white rounded-md shadow-lg border border-gray-200">
+                                          <img 
+                                            src={`${getShelbyApiUrl()}/shelby/v1/blobs/${correctBlobName}`} 
+                                            alt={fileName} 
+                                            className="max-w-64 max-h-64 object-contain"
+                                            onError={(e) => {
+                                              try {
+                                                const imgElement = e.target;
+                                                // Check if the element is still in the document
+                                                if (!document.contains(imgElement)) {
+                                                  return;
+                                                }
+                                                
+                                                const parentElement = imgElement.parentElement;
+                                                if (parentElement && document.contains(parentElement)) {
+                                                  // Create error message element
+                                                  const errorDiv = document.createElement('div');
+                                                  errorDiv.className = 'p-4 text-sm text-gray-500';
+                                                  errorDiv.innerHTML = `<strong>Image preview failed</strong><br /><small class="text-xs text-gray-400">Check if the file exists and is accessible</small>`;
+                                                  
+                                                  // Replace img with error message
+                                                  try {
+                                                    parentElement.replaceChild(errorDiv, imgElement);
+                                                  } catch (replaceError) {
+                                                    // Ignore replaceChild errors
+                                                  }
+                                                }
+                                              } catch (error) {
+                                                // Ignore any errors
+                                              }
+                                            }}
+                                          />
                                         </div>
-                                        <div className="text-xs text-gray-500 mt-1">
-                                          {formatFileSize(blob.size)}
+                                      ) : (
+                                        <div className="p-3 bg-white rounded-md shadow-lg border border-gray-200">
+                                          <div className="flex items-center gap-2">
+                                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                            </svg>
+                                            <span className="text-sm text-gray-700">{fileName}</span>
+                                          </div>
+                                          <div className="text-xs text-gray-500 mt-1">
+                                            {formatFileSize(blob.size)}
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
+                                      )}
+                                    </div>
                                   </div>
                                 </span>
                               </div>
