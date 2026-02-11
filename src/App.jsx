@@ -735,7 +735,7 @@ function UploadPage({ signAndSubmitTransaction }) {
                           </svg>
                           <div className="flex justify-between items-center w-full">
                             <span className="text-sm font-medium text-gray-700">Network</span>
-                            <div className="flex items-center">
+                            <div className="flex items-center overflow-visible z-500 relative">
                               {network?.name === 'custom' && (
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-green-600 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -882,8 +882,8 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        <nav className="bg-white shadow-md z-400">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative z-1">
+        <nav className="bg-white shadow-md z-400 relative">
           <div className="max-w-4xl mx-auto px-4 overflow-visible">
             {message && (
               <div className={`mt-2 mb-2 p-4 rounded-lg ${messageType === 'error' ? 'bg-red-50 border border-red-200 text-red-800' : messageType === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-blue-50 border border-blue-200 text-blue-800'}`}>
@@ -913,7 +913,7 @@ function App() {
                   </Link>
                 </div>
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center overflow-visible z-500 relative">
                 {connected ? (
                   <div className="flex items-center space-x-3">
                     <div className="bg-white rounded-lg p-3 flex items-center space-x-3 shadow-sm">
@@ -936,7 +936,7 @@ function App() {
                     </button>
                   </div>
                 ) : (
-                  <div className="relative overflow-visible">
+                  <div className="relative overflow-visible z-500">
                     <button 
                       className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg flex items-center space-x-2 transition-all duration-300 hover:shadow-lg hover:from-blue-700 hover:to-blue-800 transform hover:-translate-y-1"
                       onClick={(e) => {
@@ -953,7 +953,7 @@ function App() {
                       </svg>
                     </button>
                     {showConnectMenu && (
-                      <div className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-lg shadow-xl z-500 border border-gray-700 md:w-56">
+                      <div className="absolute right-0 top-full mt-2 w-64 bg-gray-800 rounded-lg shadow-xl z-9999 border border-gray-700 md:w-56">
                         <div className="py-2">
                           <div className="px-4 py-2 border-b border-gray-700">
                             <p className="text-xs font-semibold text-gray-400 uppercase">Select Wallet</p>
@@ -1002,7 +1002,7 @@ function App() {
           </div>
         </nav>
 
-        <main className="relative z-100">
+        <main className="relative z-10">
           <Routes>
             <Route path="/" element={<UploadPage signAndSubmitTransaction={signAndSubmitTransaction || (() => Promise.reject(new Error('signAndSubmitTransaction is not available')))} />} />
             <Route path="/blobs" element={<Blobs />} />
