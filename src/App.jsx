@@ -1067,7 +1067,7 @@ function App() {
                   {(() => {
                     const whitelistedAddress = '0x41da761b21d995d2b11616638e48f22342e2a48c5f739517a6e447a13ad5814e';
                     if (connected && account?.address) {
-                      const userAddress = account.address.toLowerCase();
+                      const userAddress = String(account.address).toLowerCase();
                       if (userAddress === whitelistedAddress.toLowerCase()) {
                         return (
                           <Link 
