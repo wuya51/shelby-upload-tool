@@ -578,15 +578,33 @@ function UploadPage({ signAndSubmitTransaction }) {
     if (!sessionTracked) {
       const trackVisit = async () => {
         try {
-          const ip = await fetch('https://api.ipify.org?format=json')
-            .then(response => response.json())
-            .then(data => data.ip)
-            .catch(() => 'Unknown');
+          let ip = 'Unknown';
+          try {
+            const ipResponse = await fetch('https://api.ipify.org?format=json', {
+              headers: {
+                'Accept': 'application/json'
+              },
+              mode: 'cors'
+            });
+            if (ipResponse.ok) {
+              const ipData = await ipResponse.json();
+              ip = ipData.ip;
+            } else {
+              console.error('IP API error:', ipResponse.status, ipResponse.statusText);
+            }
+          } catch (ipError) {
+            console.error('Failed to get IP address:', ipError);
+          }
           
           let region = 'Unknown';
           if (ip !== 'Unknown') {
             try {
-              const geoResponse = await fetch(`https://free.freeipapi.com/api/json/${ip}`);
+              const geoResponse = await fetch(`https://free.freeipapi.com/api/json/${ip}`, {
+                headers: {
+                  'Accept': 'application/json'
+                },
+                mode: 'cors'
+              });
               if (geoResponse.ok) {
                 const geoData = await geoResponse.json();
                 console.log('Geolocation data:', geoData);
