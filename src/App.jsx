@@ -3,12 +3,14 @@ import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { BrowserRouter as Router, Routes, Link, Route } from 'react-router-dom';
 import { Aptos, AptosConfig, Network, AccountAddress } from "@aptos-labs/ts-sdk";
 import Blobs from './pages/Blobs';
+import Stats from './pages/Stats';
 
 function UploadPage({ signAndSubmitTransaction }) {
   const { connected, account, network } = useWallet();
   const [file, setFile] = useState(null);
   const [blobName, setBlobName] = useState('');
   const [expirationDays, setExpirationDays] = useState(365);
+  const [privacyLevel, setPrivacyLevel] = useState('public');
   const [loading, setLoading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const [uploadData, setUploadData] = useState(null);
@@ -103,7 +105,8 @@ function UploadPage({ signAndSubmitTransaction }) {
         fileSize,
         fileData,
         expirationMicros,
-        moduleAddress
+        moduleAddress,
+        privacyLevel
       };
 
       setUploadData(uploadDataObj);
@@ -161,6 +164,24 @@ function UploadPage({ signAndSubmitTransaction }) {
         blobMerkleRootBytes[i] = parseInt(cleanHex.substring(i * 2, i * 2 + 2), 16);
       }
 
+      const calculateNumChunksets = (fileSize, chunkSize = 5 * 1024 * 1024) => {
+        if (fileSize <= 0) return 1;
+        return Math.ceil(fileSize / chunkSize);
+      };
+
+      const getPermissionValue = (privacyLevel) => {
+        switch(privacyLevel) {
+          case 'private':
+            return "2";
+          case 'public':
+          default:
+            return "0";
+        }
+      };
+
+      const numChunksets = calculateNumChunksets(currentUploadData.fileSize);
+      const permissionValue = getPermissionValue(currentUploadData.privacyLevel);
+
       const transactionPayload = {
         sender: currentUploadData.parsedAddress,
         data: {
@@ -169,9 +190,9 @@ function UploadPage({ signAndSubmitTransaction }) {
             [currentUploadData.uniqueBlobName],
             currentUploadData.expirationMicros.toString(),
             [Array.from(blobMerkleRootBytes)],
-            ["1"],
+            [numChunksets.toString()],
             [currentUploadData.fileSize.toString()],
-            "0",
+            permissionValue,
             "0"
           ]
         }
@@ -552,6 +573,39 @@ function UploadPage({ signAndSubmitTransaction }) {
     }
   }, [connected, account]);
 
+  useEffect(() => {
+    const sessionTracked = localStorage.getItem('shelbySessionTracked');
+    if (!sessionTracked) {
+      const trackVisit = async () => {
+        try {
+          const ip = await fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => data.ip)
+            .catch(() => 'Unknown');
+          
+          const visitData = {
+            id: Date.now(),
+            timestamp: new Date().toISOString(),
+            ip: ip,
+            userAgent: navigator.userAgent,
+            referrer: document.referrer
+          };
+          
+          const storedVisits = JSON.parse(localStorage.getItem('shelbyVisits') || '[]');
+          storedVisits.push(visitData);
+          localStorage.setItem('shelbyVisits', JSON.stringify(storedVisits));
+          localStorage.setItem('shelbySessionTracked', 'true');
+          
+          console.log('Visit tracked:', visitData);
+        } catch (error) {
+          console.error('Failed to track visit:', error);
+        }
+      };
+
+      trackVisit();
+    }
+  }, []);
+
   return (
     <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
       <div className="max-w-6xl mx-auto px-4 py-8">
@@ -583,7 +637,34 @@ function UploadPage({ signAndSubmitTransaction }) {
             {uploadStep === 'prepare' && !uploadCompleted && (
               <form onSubmit={handlePrepareUpload} className="space-y-6">
                 <div>
-                  <label htmlFor="file" className="block text-gray-700 font-medium mb-2">File</label>
+                  <label htmlFor="file" className="block text-gray-700 font-medium mb-2">
+                    File
+                    <div className="inline-flex ml-4 space-x-4">
+                      <label className="inline-flex items-center">
+                        <input
+                          type="radio"
+                          name="privacyLevel"
+                          value="public"
+                          checked={privacyLevel === 'public'}
+                          onChange={(e) => setPrivacyLevel(e.target.value)}
+                          className="form-radio h-4 w-4 text-blue-600"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">Public</span>
+                      </label>
+                      <label className="inline-flex items-center">
+                        <input
+                          type="radio"
+                          name="privacyLevel"
+                          value="private"
+                          checked={privacyLevel === 'private'}
+                          onChange={(e) => setPrivacyLevel(e.target.value)}
+                          className="form-radio h-4 w-4 text-blue-600"
+                          disabled
+                        />
+                        <span className="ml-2 text-sm text-gray-400">Private (Coming Soon)</span>
+                      </label>
+                    </div>
+                  </label>
                   <input
                     type="file"
                     id="file"
@@ -648,6 +729,7 @@ function UploadPage({ signAndSubmitTransaction }) {
                   <div className="space-y-2">
                     <p className="text-sm text-gray-600"><span className="font-medium">File:</span> {uploadData?.fileSize} bytes</p>
                     <p className="text-sm text-gray-600"><span className="font-medium">Blob Name:</span> {uploadData?.uniqueBlobName}</p>
+                    <p className="text-sm text-gray-600"><span className="font-medium">Privacy Level:</span> {uploadData?.privacyLevel === 'private' ? 'Private' : 'Public'}</p>
                     <p className="text-sm text-gray-600"><span className="font-medium">Upload Time:</span> {new Date().toLocaleString('en-US')}</p>
                   </div>
                 </div>
@@ -1077,6 +1159,7 @@ function App() {
           <Routes>
             <Route path="/" element={<UploadPage signAndSubmitTransaction={signAndSubmitTransaction || (() => Promise.reject(new Error('signAndSubmitTransaction is not available')))} />} />
             <Route path="/blobs" element={<Blobs />} />
+            <Route path="/stats" element={<Stats />} />
           </Routes>
         </main>
       </div>
