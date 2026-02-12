@@ -29,22 +29,10 @@ function Stats() {
           
           const storedVisits = JSON.parse(localStorage.getItem('shelbyVisits') || '[]');
           
-          const visitsWithRegion = storedVisits.map(visit => {
-            let region = 'Unknown';
-            if (visit.ip === '192.168.1.1') {
-              region = 'New York, USA';
-            } else if (visit.ip === '10.0.0.1') {
-              region = 'Los Angeles, USA';
-            } else if (visit.ip === '172.16.0.1') {
-              region = 'Chicago, USA';
-            } else if (visit.ip !== 'Unknown') {
-              region = 'USA';
-            }
-            return {
-              ...visit,
-              region
-            };
-          });
+          const visitsWithRegion = storedVisits.map(visit => ({
+            ...visit,
+            region: visit.region || 'Unknown'
+          }));
           
           setVisits(visitsWithRegion.reverse());
         } catch (error) {

@@ -583,10 +583,30 @@ function UploadPage({ signAndSubmitTransaction }) {
             .then(data => data.ip)
             .catch(() => 'Unknown');
           
+          let region = 'Unknown';
+          if (ip !== 'Unknown') {
+            try {
+              const geoResponse = await fetch(`https://ipapi.co/${ip}/json/`);
+              if (geoResponse.ok) {
+                const geoData = await geoResponse.json();
+                if (geoData.city && geoData.country_name) {
+                  region = `${geoData.city}, ${geoData.country_name}`;
+                } else if (geoData.region && geoData.country_name) {
+                  region = `${geoData.region}, ${geoData.country_name}`;
+                } else if (geoData.country_name) {
+                  region = geoData.country_name;
+                }
+              }
+            } catch (geoError) {
+              console.error('Failed to get geolocation:', geoError);
+            }
+          }
+          
           const visitData = {
             id: Date.now(),
             timestamp: new Date().toISOString(),
             ip: ip,
+            region: region,
             userAgent: navigator.userAgent,
             referrer: document.referrer
           };
