@@ -586,16 +586,19 @@ function UploadPage({ signAndSubmitTransaction }) {
           let region = 'Unknown';
           if (ip !== 'Unknown') {
             try {
-              const geoResponse = await fetch(`https://ipapi.co/${ip}/json/`);
+              const geoResponse = await fetch(`https://free.freeipapi.com/api/json/${ip}`);
               if (geoResponse.ok) {
                 const geoData = await geoResponse.json();
-                if (geoData.city && geoData.country_name) {
-                  region = `${geoData.city}, ${geoData.country_name}`;
-                } else if (geoData.region && geoData.country_name) {
-                  region = `${geoData.region}, ${geoData.country_name}`;
-                } else if (geoData.country_name) {
-                  region = geoData.country_name;
+                console.log('Geolocation data:', geoData);
+                if (geoData.cityName && geoData.countryName) {
+                  region = `${geoData.cityName}, ${geoData.countryName}`;
+                } else if (geoData.regionName && geoData.countryName) {
+                  region = `${geoData.regionName}, ${geoData.countryName}`;
+                } else if (geoData.countryName) {
+                  region = geoData.countryName;
                 }
+              } else {
+                console.error('Geolocation API error:', geoResponse.status, geoResponse.statusText);
               }
             } catch (geoError) {
               console.error('Failed to get geolocation:', geoError);
