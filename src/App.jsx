@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { BrowserRouter as Router, Routes, Link, Route } from 'react-router-dom';
 import { Aptos, AptosConfig, Network, AccountAddress } from "@aptos-labs/ts-sdk";
 import Blobs from './pages/Blobs';
-import Stats from './pages/Stats';
 
 function UploadPage({ signAndSubmitTransaction }) {
   const { connected, account, network } = useWallet();
@@ -573,79 +572,7 @@ function UploadPage({ signAndSubmitTransaction }) {
     }
   }, [connected, account]);
 
-  useEffect(() => {
-    const sessionTracked = localStorage.getItem('shelbySessionTracked');
-    if (!sessionTracked) {
-      const trackVisit = async () => {
-        try {
-          let ip = 'Unknown';
-          try {
-            const ipResponse = await fetch('https://api.ipify.org?format=json', {
-              headers: {
-                'Accept': 'application/json'
-              },
-              mode: 'cors'
-            });
-            if (ipResponse.ok) {
-              const ipData = await ipResponse.json();
-              ip = ipData.ip;
-            } else {
-              console.error('IP API error:', ipResponse.status, ipResponse.statusText);
-            }
-          } catch (ipError) {
-            console.error('Failed to get IP address:', ipError);
-          }
-          
-          let region = 'Unknown';
-          if (ip !== 'Unknown') {
-            try {
-              const geoResponse = await fetch(`https://free.freeipapi.com/api/json/${ip}`, {
-                headers: {
-                  'Accept': 'application/json'
-                },
-                mode: 'cors'
-              });
-              if (geoResponse.ok) {
-                const geoData = await geoResponse.json();
-                console.log('Geolocation data:', geoData);
-                if (geoData.cityName && geoData.countryName) {
-                  region = `${geoData.cityName}, ${geoData.countryName}`;
-                } else if (geoData.regionName && geoData.countryName) {
-                  region = `${geoData.regionName}, ${geoData.countryName}`;
-                } else if (geoData.countryName) {
-                  region = geoData.countryName;
-                }
-              } else {
-                console.error('Geolocation API error:', geoResponse.status, geoResponse.statusText);
-              }
-            } catch (geoError) {
-              console.error('Failed to get geolocation:', geoError);
-            }
-          }
-          
-          const visitData = {
-            id: Date.now(),
-            timestamp: new Date().toISOString(),
-            ip: ip,
-            region: region,
-            userAgent: navigator.userAgent,
-            referrer: document.referrer
-          };
-          
-          const storedVisits = JSON.parse(localStorage.getItem('shelbyVisits') || '[]');
-          storedVisits.push(visitData);
-          localStorage.setItem('shelbyVisits', JSON.stringify(storedVisits));
-          localStorage.setItem('shelbySessionTracked', 'true');
-          
-          console.log('Visit tracked:', visitData);
-        } catch (error) {
-          console.error('Failed to track visit:', error);
-        }
-      };
 
-      trackVisit();
-    }
-  }, []);
 
   return (
     <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
@@ -1220,7 +1147,6 @@ function App() {
           <Routes>
             <Route path="/" element={<UploadPage signAndSubmitTransaction={signAndSubmitTransaction || (() => Promise.reject(new Error('signAndSubmitTransaction is not available')))} />} />
             <Route path="/blobs" element={<Blobs />} />
-            <Route path="/stats" element={<Stats />} />
           </Routes>
         </main>
       </div>
