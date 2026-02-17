@@ -159,7 +159,6 @@ export async function navigateFileTree(rootDir: string): Promise<string> {
 						})
 						return
 					}
-					// File selected
 					done(entry.path as string)
 				} else if (key.name === "c" && key.ctrl) {
 					process.exit(1)

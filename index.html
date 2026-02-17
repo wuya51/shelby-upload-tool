@@ -5,8 +5,18 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Shelby Upload Tool</title>
-    <script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
-    <script>LA.init({id:"L6AgrVsl3pBlkYNn",ck:"L6AgrVsl3pBlkYNn"})</script>
+    <!-- Buffer and require polyfill for browser compatibility -->
+    <script>
+      // Define require function for browser compatibility
+      window.require = window.require || function(module) {
+        if (module === 'buffer') {
+          return {
+            Buffer: window.Buffer
+          };
+        }
+        throw new Error('Module not found: ' + module);
+      };
+    </script>
   </head>
   <body>
     <div id="root"></div>

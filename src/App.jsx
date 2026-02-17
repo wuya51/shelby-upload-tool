@@ -1,11 +1,87 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
+import { useWallet as useAptosWallet } from '@aptos-labs/wallet-adapter-react';
+import { useWalletConnection, useClientStore } from "@solana/react-hooks";
+import { Connection, clusterApiUrl } from '@solana/web3.js';
 import { BrowserRouter as Router, Routes, Link, Route } from 'react-router-dom';
-import { Aptos, AptosConfig, Network, AccountAddress } from "@aptos-labs/ts-sdk";
+import { Aptos, AptosConfig, Network as AptosNetwork, AccountAddress } from "@aptos-labs/ts-sdk";
+import { useStorageAccount, Network } from "@shelby-protocol/solana-kit/react";
+import { useUploadBlobs } from "@shelby-protocol/react";
 import Blobs from './pages/Blobs';
+import { useSolanaNetwork } from './SolanaWalletProvider.jsx';
 
-function UploadPage({ signAndSubmitTransaction }) {
-  const { connected, account, network } = useWallet();
+function UploadPage({ signAndSubmitTransaction, showMessage }) {
+  const { connected, account, network } = useAptosWallet();
+  const { wallet, status: solanaStatus, connectors, connect: solanaConnect, disconnect: solanaDisconnect } = useWalletConnection();
+  const { currentNetwork, switchNetwork, networks, shelbyClient } = useSolanaNetwork();
+  const cluster = useClientStore((s) => s.cluster);
+  
+  const solanaConnected = solanaStatus === "connected";
+  const solanaPublicKey = wallet?.account?.address;
+  const [solanaNetworkInfo, setSolanaNetworkInfo] = useState(null);
+  
+  const detectWalletNetwork = async () => {
+    if (!solanaConnected || !wallet || !solanaPublicKey) {
+      return null;
+    }
+    
+    const networksToCheck = [
+      { name: 'mainnet', endpoint: clusterApiUrl('mainnet-beta'), genesisHash: '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d' },
+      { name: 'devnet', endpoint: clusterApiUrl('devnet'), genesisHash: 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG' },
+      { name: 'testnet', endpoint: clusterApiUrl('testnet'), genesisHash: '4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY' }
+    ];
+    
+    for (const network of networksToCheck) {
+      try {
+        const connection = new Connection(network.endpoint, 'confirmed');
+        const hash = await connection.getGenesisHash();
+        
+        if (hash === network.genesisHash) {
+          return {
+            key: network.name,
+            name: network.name,
+            networkType: `Solana ${network.name.charAt(0).toUpperCase() + network.name.slice(1)}`,
+            endpoint: network.endpoint,
+            genesisHash: hash
+          };
+        }
+      } catch (error) {
+        continue;
+      }
+    }
+    
+    return null;
+  };
+  
+  useEffect(() => {
+    const detectNetwork = async () => {
+      const detected = await detectWalletNetwork();
+      setSolanaNetworkInfo(detected);
+    };
+    
+    if (solanaConnected) {
+      detectNetwork();
+    } else {
+      setSolanaNetworkInfo(null);
+    }
+  }, [solanaConnected, wallet, solanaPublicKey]);
+  
+  const getSolanaNetwork = () => {
+    if (solanaNetworkInfo?.networkType) {
+      return solanaNetworkInfo.networkType;
+    }
+    return 'Solana Network';
+  };
+  
+  const { storageAccountAddress, signAndSubmitTransaction: solanaSignAndSubmitTransaction } = useStorageAccount({
+    client: shelbyClient,
+    wallet,
+  });
+  
+  const { mutateAsync: uploadBlobs, isPending: isUploading } = useUploadBlobs({
+    client: shelbyClient,
+  });
+  
+  const [walletType, setWalletType] = useState(null);
   const [file, setFile] = useState(null);
   const [blobName, setBlobName] = useState('');
   const [expirationDays, setExpirationDays] = useState(365);
@@ -18,6 +94,92 @@ function UploadPage({ signAndSubmitTransaction }) {
   const [aptBalance, setAptBalance] = useState(null);
   const [shelbyUsdBalance, setShelbyUsdBalance] = useState(null);
   const [faucetLoading, setFaucetLoading] = useState(false);
+
+  const isConnected = connected || solanaConnected;
+  const currentAccount = connected ? account : { publicKey: solanaPublicKey };
+
+  const handleSolanaFaucet = async () => {
+    if (!solanaConnected) {
+      showMessage('Please connect your Solana wallet first', 'error');
+      return;
+    }
+
+    if (!storageAccountAddress) {
+      showMessage('Storage account address not available', 'error');
+      return;
+    }
+
+    setFaucetLoading(true);
+
+    try {
+      const storageAddressStr = storageAccountAddress.toString();
+      const results = { shelbyUsd: false, apt: false };
+
+      await Promise.all([
+        shelbyClient.fundAccountWithShelbyUSD({
+          address: storageAddressStr,
+          amount: 1_000_000_000,
+        }).then(() => {
+          results.shelbyUsd = true;
+        }).catch((error) => {
+        }),
+        shelbyClient.fundAccountWithAPT({
+          address: storageAddressStr,
+          amount: 1_000_000_000,
+        }).then(() => {
+          results.apt = true;
+        }).catch((error) => {
+        })
+      ]);
+
+      let successCount = 0;
+      if (results.shelbyUsd) successCount++;
+      if (results.apt) successCount++;
+
+      if (successCount > 0) {
+        showMessage(`Faucet requested successfully! ${successCount}/2 tokens claimed`, 'success');
+      } else {
+        showMessage('Faucet request failed for all tokens', 'error');
+      }
+    } catch (error) {
+      showMessage('Failed to request Solana faucet: ' + error.message, 'error');
+    } finally {
+      setFaucetLoading(false);
+    }
+  };
+
+  const handleAptosFaucet = async () => {
+    if (!connected || !account) {
+      showMessage('Please connect your Aptos wallet first', 'error');
+      return;
+    }
+
+    setFaucetLoading(true);
+
+    try {
+      const response = await fetch('https://faucet.shelbynet.shelby.xyz/fund', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          address: parseAddress(account.address),
+          amount: 1000000000
+        })
+      });
+
+      if (response.ok) {
+        showMessage('Successfully claimed ShelbyUSD', 'success');
+      } else {
+        const errorData = await response.json();
+        showMessage(`Failed to claim: ${errorData.message || 'Unknown error'}`, 'error');
+      }
+    } catch (error) {
+      showMessage('Failed to claim ShelbyUSD', 'error');
+    } finally {
+      setFaucetLoading(false);
+    }
+  };
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -38,15 +200,91 @@ function UploadPage({ signAndSubmitTransaction }) {
     });
   };
 
-  const handlePrepareUpload = async (e) => {
+  const handleSolanaUpload = async (e) => {
     e.preventDefault();
-    if (!connected || !account || !account.address) {
-      alert('Please connect your wallet first');
+    
+    if (!solanaConnected) {
+      showMessage('Please connect your Solana wallet first', 'error');
       return;
     }
 
     if (!file) {
-      alert('Please select a file to upload');
+      showMessage('Please select a file to upload', 'error');
+      return;
+    }
+
+    if (!storageAccountAddress || !solanaSignAndSubmitTransaction) {
+      showMessage('Storage account or signer not available', 'error');
+      return;
+    }
+
+    setLoading(true);
+    setUploadStatus('Uploading blob...');
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const blobData = new Uint8Array(arrayBuffer);
+
+      const expirationMicros = (Date.now() + expirationDays * 24 * 60 * 60 * 1000) * 1000;
+
+      await uploadBlobs({
+        signer: {
+          account: storageAccountAddress,
+          signAndSubmitTransaction: solanaSignAndSubmitTransaction,
+        },
+        blobs: [
+          {
+            blobName: file.name,
+            blobData,
+          },
+        ],
+        expirationMicros,
+      });
+
+      const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${storageAccountAddress.toString()}/${file.name}`;
+
+      setUploadStatus('Blob uploaded successfully!');
+      showMessage(`File uploaded successfully! URL: ${blobUrl}`, 'success');
+      setUploadCompleted(true);
+      setUploadStep('prepare');
+      setFile(null);
+      setBlobName('');
+      setUploadData(null);
+      setLoading(false);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      if (errorMessage.includes('INSUFFICIENT_BALANCE_FOR_TRANSACTION_FEE')) {
+        showMessage('Your account needs funding before uploading. Please click "Fund Account" to add APT for transaction fees.', 'error');
+      } else if (errorMessage.includes('E_INSUFFICIENT_FUNDS')) {
+        showMessage('Your account needs more ShelbyUSD to pay for storage. Please click "Fund Account" to add ShelbyUSD tokens.', 'error');
+      } else {
+        showMessage('Failed to upload file: ' + errorMessage, 'error');
+      }
+      setUploadStatus('');
+      setLoading(false);
+    }
+  };
+
+  const handlePrepareUpload = async (e) => {
+    e.preventDefault();
+    if (!connected && !solanaConnected) {
+      showMessage('Please connect your wallet first', 'error');
+      return;
+    }
+    if (!connected && !solanaPublicKey) {
+      showMessage('Please connect your wallet first', 'error');
+      return;
+    }
+
+    if (!file) {
+      showMessage('Please select a file to upload', 'error');
+      return;
+    }
+
+    if (solanaConnected && !connected) {
+      setWalletType('solana');
+      await handleSolanaUpload(e);
       return;
     }
 
@@ -66,30 +304,57 @@ function UploadPage({ signAndSubmitTransaction }) {
 
       const moduleAddress = import.meta.env.VITE_SHELBY_MODULE_ADDRESS || "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5";
 
-      try {
-        const aptos = initAptosClient();
-        await aptos.account.getModule({ 
-          accountAddress: moduleAddress, 
-          moduleName: "blob_metadata"
-        });
-      } catch (error) {
-      }
+      let parsedAddress;
+      if (connected && account) {
+        setWalletType('aptos');
+        parsedAddress = parseAddress(account.address);
+        
+        try {
+          const aptos = initAptosClient();
+          await aptos.account.getModule({ 
+            accountAddress: moduleAddress, 
+            moduleName: "blob_metadata"
+          });
+        } catch (error) {
+        }
 
-      try {
-        const aptos = initAptosClient();
-        await aptos.transactions.getGasPriceEstimate();
-      } catch (error) {
-      }
+        try {
+          const aptos = initAptosClient();
+          await aptos.transactions.getGasPriceEstimate();
+        } catch (error) {
+        }
 
-      try {
-        const aptos = initAptosClient();
-        await aptos.account.getAccountInfo({ 
-          accountAddress: account.address 
-        });
-      } catch (error) {
+        try {
+          const aptos = initAptosClient();
+          await aptos.account.getAccountInfo({ 
+            accountAddress: account.address 
+          });
+        } catch (error) {
+        }
+      } else if (solanaConnected) {
+        setWalletType('solana');
+        const currentAccount = solanaPublicKey;
+        if (!currentAccount) {
+          throw new Error('No Solana account found');
+        }
+        
+        try {
+          const { SolanaDerivedPublicKey } = await import('@aptos-labs/derived-wallet-solana');
+          const defaultSolanaAuthenticationFunction = '0x1::solana_derivable_account::authenticate';
+          const domain = 'shelby';
+          
+          const derivedPublicKey = new SolanaDerivedPublicKey({
+            domain,
+            solanaPublicKey: currentAccount,
+            authenticationFunction: defaultSolanaAuthenticationFunction
+          });
+          
+          parsedAddress = derivedPublicKey.authKey().derivedAddress().toString();
+        } catch (error) {
+          throw new Error('Failed to derive storage address: ' + error.message);
+        }
       }
-
-      const parsedAddress = parseAddress(account.address);
+      
       if (!parsedAddress) {
         throw new Error('Could not parse account address');
       }
@@ -113,7 +378,7 @@ function UploadPage({ signAndSubmitTransaction }) {
       setUploadStatus('');
     } catch (error) {
       setUploadStatus('');
-      alert('Failed to prepare upload: ' + error.message);
+      showMessage('Failed to prepare upload: ' + error.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -121,13 +386,17 @@ function UploadPage({ signAndSubmitTransaction }) {
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!connected || !account || !account.address) {
-      alert('Please connect your wallet first');
+    if (!connected && !solanaConnected) {
+      showMessage('Please connect your wallet first', 'error');
+      return;
+    }
+    if (!connected && !solanaPublicKey) {
+      showMessage('Please connect your wallet first', 'error');
       return;
     }
 
-    if (!uploadData) {
-      alert('Please prepare upload first');
+    if (!file) {
+      showMessage('Please select a file to upload', 'error');
       return;
     }
 
@@ -181,112 +450,161 @@ function UploadPage({ signAndSubmitTransaction }) {
       const numChunksets = calculateNumChunksets(currentUploadData.fileSize);
       const permissionValue = getPermissionValue(currentUploadData.privacyLevel);
 
-      const transactionPayload = {
-        sender: currentUploadData.parsedAddress,
-        data: {
-          function: `${currentUploadData.moduleAddress}::blob_metadata::register_multiple_blobs`,
-          functionArguments: [
-            [currentUploadData.uniqueBlobName],
-            currentUploadData.expirationMicros.toString(),
-            [Array.from(blobMerkleRootBytes)],
-            [numChunksets.toString()],
-            [currentUploadData.fileSize.toString()],
-            permissionValue,
-            "0"
-          ]
-        }
-      };
-
       let txResponse;
-      try {
-        if (!signAndSubmitTransaction || typeof signAndSubmitTransaction !== 'function') {
-          throw new Error('signAndSubmitTransaction function is not available');
-        }
-        txResponse = await signAndSubmitTransaction(transactionPayload);
+      if (walletType === 'aptos') {
+        const transactionPayload = {
+          sender: currentUploadData.parsedAddress,
+          data: {
+            function: `${currentUploadData.moduleAddress}::blob_metadata::register_multiple_blobs`,
+            functionArguments: [
+              [currentUploadData.uniqueBlobName],
+              currentUploadData.expirationMicros.toString(),
+              [Array.from(blobMerkleRootBytes)],
+              [numChunksets.toString()],
+              [currentUploadData.fileSize.toString()],
+              permissionValue,
+              "0"
+            ]
+          }
+        };
 
-        if (!txResponse || !txResponse.hash) {
+        try {
+          if (!signAndSubmitTransaction || typeof signAndSubmitTransaction !== 'function') {
+            throw new Error('signAndSubmitTransaction function is not available');
+          }
+          txResponse = await signAndSubmitTransaction(transactionPayload);
+
+          if (!txResponse || !txResponse.hash) {
+            setUploadStatus('');
+            showMessage('Transaction submission failed: No hash returned', 'error');
+            setLoading(false);
+            return;
+          }
+
+          setUploadStatus('Submitting transaction...');
+        } catch (error) {
+
+          if (!error) {
+            setUploadStatus('');
+            showMessage('Transaction verification failed: No error information available', 'error');
+            setUploadStep('upload');
+            setLoading(false);
+            return;
+          }
+
+          let errorMessage = 'Unknown error';
+          if (typeof error === 'string') {
+            errorMessage = error;
+          } else if (error instanceof Error && error.message) {
+            errorMessage = error.message;
+          } else if (error.toString) {
+            errorMessage = error.toString();
+          }
+          
           setUploadStatus('');
-          alert('Transaction submission failed: No hash returned');
+          if (errorMessage && errorMessage.includes('The specified blob was not found')) {
+            setUploadStatus('Preparing upload...');
+          } else if (errorMessage && (errorMessage.includes('User rejected') || 
+                   errorMessage.includes('Cancel') || 
+                   errorMessage.includes('cancelled') ||
+                   errorMessage.includes('rejected') ||
+                   errorMessage.includes('cancel') ||
+                   errorMessage.includes('CANCELED') ||
+                   errorMessage.includes('USER_REJECTED'))) {
+            showMessage('Transaction cancelled by user', 'info');
+            setUploadStep('upload');
+          } else {
+            showMessage('Transaction verification failed: ' + errorMessage, 'error');
+            setUploadStep('upload');
+          }
           setLoading(false);
           return;
         }
 
-        setUploadStatus('Submitting transaction...');
-      } catch (error) {
+        setUploadStatus('Verifying transaction...');
 
-        if (!error) {
-          setUploadStatus('');
-          alert('Transaction verification failed: No error information available');
-          setUploadStep('upload');
-          setLoading(false);
-          return;
-        }
+        const transactionUrl = `${getShelbyFullnodeUrl()}/transactions/by_hash/${txResponse.hash}`;
 
-        let errorMessage;
-        if (typeof error === 'string') {
-          errorMessage = error;
-        } else if (error instanceof Error && error.message) {
-          errorMessage = error.message;
-        } else if (error.toString) {
-          errorMessage = error.toString();
-        } else {
-          errorMessage = 'Unknown error';
-        }
-        
-        setUploadStatus('');
-        if (errorMessage.includes('The specified blob was not found')) {
-          setUploadStatus('Preparing upload...');
-        } else if (errorMessage.includes('User rejected') || 
-                 errorMessage.includes('Cancel') || 
-                 errorMessage.includes('cancelled') ||
-                 errorMessage.includes('rejected') ||
-                 errorMessage.includes('cancel') ||
-                 errorMessage.includes('CANCELED') ||
-                 errorMessage.includes('USER_REJECTED')) {
-          alert('Transaction cancelled by user');
-          setUploadStep('upload');
-        } else {
-          alert('Transaction verification failed: ' + errorMessage);
-          setUploadStep('upload');
-        }
-        setLoading(false);
-        return;
-      }
-
-      setUploadStatus('Verifying transaction...');
-
-      const transactionUrl = `${getShelbyFullnodeUrl()}/transactions/by_hash/${txResponse.hash}`;
-
-      const transactionResponse = await fetch(transactionUrl, {
-        method: 'GET',
-        headers: {
-          'X-Shelby-Api-Key': SHELBY_API_KEY
-        }
-      });
-
-      if (!transactionResponse.ok) {
-        const errorData = await transactionResponse.text();
-        setUploadStatus('');
-        alert(`Transaction verification failed: ${transactionResponse.status} ${transactionResponse.statusText} - ${errorData}`);
-        setLoading(false);
-        return;
-      }
-
-      await transactionResponse.json();
-
-      setUploadStatus('Waiting for transaction...');
-
-      try {
-        const aptos = initAptosClient();
-        await aptos.waitForTransaction({
-          transactionHash: txResponse.hash,
-          options: {
-            waitForIndexer: true
+        const transactionResponse = await fetch(transactionUrl, {
+          method: 'GET',
+          headers: {
+            'X-Shelby-Api-Key': SHELBY_API_KEY
           }
         });
-      } catch (error) {
-        setUploadStatus('');
-        alert('Error waiting for transaction: ' + error.message);
+
+        if (!transactionResponse.ok) {
+          const errorData = await transactionResponse.text();
+          setUploadStatus('');
+          showMessage(`Transaction verification failed: ${transactionResponse.status} ${transactionResponse.statusText} - ${errorData}`, 'error');
+          setLoading(false);
+          return;
+        }
+
+        await transactionResponse.json();
+
+        setUploadStatus('Waiting for transaction...');
+
+        try {
+          const aptos = initAptosClient();
+          await aptos.waitForTransaction({
+            transactionHash: txResponse.hash,
+            options: {
+              waitForIndexer: true
+            }
+          });
+        } catch (error) {
+          setUploadStatus('');
+          showMessage('Error waiting for transaction: ' + error.message, 'error');
+          setLoading(false);
+          return;
+        }
+      } else if (walletType === 'solana') {
+        setUploadStatus('Preparing Solana upload...');
+        
+        if (!storageAccountAddress || !solanaSignAndSubmitTransaction) {
+          setUploadStatus('');
+          showMessage('Storage account is initializing. Please try again in a few seconds.', 'info');
+          setLoading(false);
+          return;
+        }
+        
+        if (!solanaPublicKey) {
+          setUploadStatus('');
+          showMessage('Please connect your Solana wallet first', 'error');
+          setLoading(false);
+          return;
+        }
+
+        const expirationMicros = (Date.now() + expirationDays * 24 * 60 * 60 * 1000) * 1000;
+
+        const arrayBuffer = await file.arrayBuffer();
+        const blobData = new Uint8Array(arrayBuffer);
+
+        setUploadStatus('Uploading blob...');
+
+        await uploadBlobs({
+          signer: {
+            account: storageAccountAddress,
+            signAndSubmitTransaction: solanaSignAndSubmitTransaction,
+          },
+          blobs: [
+            {
+              blobName: currentUploadData.uniqueBlobName,
+              blobData,
+            },
+          ],
+          expirationMicros,
+        });
+
+        const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${storageAccountAddress.toString()}/${currentUploadData.uniqueBlobName}`;
+
+        setUploadStatus('Blob uploaded successfully!');
+        showMessage(`File uploaded successfully! URL: ${blobUrl}`, 'success');
+        setUploadCompleted(true);
+        setUploadStep('prepare');
+        setFile(null);
+        setBlobName('');
+        setUploadData(null);
         setLoading(false);
         return;
       }
@@ -302,7 +620,7 @@ function UploadPage({ signAndSubmitTransaction }) {
         ? currentUploadData.fileData 
         : new Uint8Array(currentUploadData.fileData);
 
-      const account = AccountAddress.from(currentUploadData.parsedAddress);
+      const account = walletType === 'aptos' ? AccountAddress.from(currentUploadData.parsedAddress) : storageAccountAddress;
       const blobName = currentUploadData.uniqueBlobName;
       const partSize = 5 * 1024 * 1024;
 
@@ -317,7 +635,7 @@ function UploadPage({ signAndSubmitTransaction }) {
           "Authorization": `Bearer ${SHELBY_BEARER_TOKEN}`
         },
         body: JSON.stringify({
-          rawAccount: account.toString(),
+          rawAccount: walletType === 'aptos' ? account.toString() : account,
           rawBlobName: blobName,
           rawPartSize: partSize
         })
@@ -393,7 +711,7 @@ function UploadPage({ signAndSubmitTransaction }) {
       setUploadCompleted(true);
     } catch (error) {
       setUploadStatus('');
-      alert('Failed to upload file: ' + error.message);
+      showMessage('Failed to upload file: ' + error.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -404,11 +722,11 @@ function UploadPage({ signAndSubmitTransaction }) {
     const indexerUrl = import.meta.env.VITE_SHELBY_INDEXER || "https://api.shelbynet.shelby.xyz/v1/graphql";
 
     const config = new AptosConfig({
-      network: Network.CUSTOM,
-      fullnode: fullnodeUrl,
-      indexer: indexerUrl,
-      chainId: 109
-    });
+    network: AptosNetwork.CUSTOM,
+    fullnode: fullnodeUrl,
+    indexer: indexerUrl,
+    chainId: 109
+  });
 
     return new Aptos(config);
   };
@@ -447,17 +765,21 @@ function UploadPage({ signAndSubmitTransaction }) {
   };
 
   const getAccountBalance = async () => {
-    if (!connected || !account || !account.address) {
+    let parsedAddress;
+    
+    if (connected && account && account.address) {
+      parsedAddress = parseAddress(account.address);
+    } else if (solanaConnected && storageAccountAddress) {
+      parsedAddress = storageAccountAddress.toString();
+    } else {
       return;
     }
-
+    
+    if (!parsedAddress) {
+      return;
+    }
+    
     try {
-      const parsedAddress = parseAddress(account.address);
-      
-      if (!parsedAddress) {
-        throw new Error('Invalid account address');
-      }
-      
       const aptos = initAptosClient();
       
       setAptBalance('0');
@@ -531,46 +853,30 @@ function UploadPage({ signAndSubmitTransaction }) {
     }
   };
 
-  const handleFaucet = async () => {
-    if (!connected || !account || !account.address) {
-      showMessage('Please connect your wallet first', 'error');
-      return;
-    }
-
-    setFaucetLoading(true);
-    showMessage('Requesting faucet...', 'info');
-
-    try {
-      const faucetUrl = import.meta.env.VITE_SHELBY_FAUCET || "https://faucet.shelbynet.shelby.xyz";
-      const response = await fetch(`${faucetUrl}?address=${account.address}`, {
-        method: 'POST'
-      });
-
-      if (response.ok) {
-        showMessage('Faucet requested successfully!', 'success');
-        setTimeout(getAccountBalance, 1000);
-      } else {
-        const errorData = await response.text();
-        showMessage(`Faucet request failed: ${errorData}`, 'error');
+  const withRetry = async (fn, retries = 3, delay = 1000) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        return await fn();
+      } catch (error) {
+        if (i === retries - 1) {
+          throw error;
+        }
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
-    } catch (error) {
-      showMessage('Failed to request faucet: ' + error.message, 'error');
-    } finally {
-      setFaucetLoading(false);
     }
   };
 
   useEffect(() => {
-    if (uploadCompleted && connected && account) {
+    if (uploadCompleted && (connected || solanaConnected)) {
       getAccountBalance();
     }
-  }, [uploadCompleted, connected, account]);
+  }, [uploadCompleted, connected, account, solanaConnected]);
 
   useEffect(() => {
-    if (connected && account) {
+    if (connected || solanaConnected) {
       getAccountBalance();
     }
-  }, [connected, account]);
+  }, [connected, account, solanaConnected]);
 
 
 
@@ -765,7 +1071,7 @@ function UploadPage({ signAndSubmitTransaction }) {
               <h2 className="text-2xl font-bold text-gray-800">Wallet Information</h2>
             </div>
             
-            {connected && account ? (
+            {(connected && account) || (solanaConnected && solanaPublicKey) ? (
               <div className="space-y-6">
                 <div className="bg-gradient-to-br from-gray-50 to-blue-50 p-5 rounded-xl border border-blue-100 shadow-sm">
                       <div className="space-y-3">
@@ -775,10 +1081,51 @@ function UploadPage({ signAndSubmitTransaction }) {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
                           <div className="flex justify-between items-center w-full">
-                            <span className="text-sm font-medium text-gray-700">Address</span>
-                            <span className="text-sm font-medium text-gray-800">{parseAddress(account.address) ? `${parseAddress(account.address).slice(0, 6)}...${parseAddress(account.address).slice(-4)}` : 'Invalid Address'}</span>
+                            <span className="text-sm font-medium text-gray-700">{connected ? 'APT Address' : 'SOL Address'}</span>
+                            <span 
+                              className="text-sm font-medium text-gray-800 cursor-pointer hover:text-blue-600 transition-colors"
+                              onClick={() => {
+                                let address;
+                                if (connected && account && parseAddress(account.address)) {
+                                  address = parseAddress(account.address);
+                                } else if (solanaConnected && solanaPublicKey) {
+                                  address = solanaPublicKey.toString();
+                                }
+                                if (address) {
+                                  navigator.clipboard.writeText(address);
+                                  showMessage('Address copied to clipboard!', 'success');
+                                }
+                              }}
+                            >
+                              {connected && account ? (
+                                parseAddress(account.address) ? `${parseAddress(account.address).slice(0, 6)}...${parseAddress(account.address).slice(-4)}` : 'Invalid Address'
+                              ) : (
+                                solanaPublicKey ? `${solanaPublicKey.toString().slice(0, 6)}...${solanaPublicKey.toString().slice(-4)}` : 'Unknown Address'
+                              )}
+                            </span>
                           </div>
                         </div>
+                        {!connected && solanaConnected === true && (
+                          <div className="flex items-center p-3 rounded-lg bg-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            <div className="flex justify-between items-center w-full">
+                              <span className="text-sm font-medium text-gray-700">Shelby Derived Address</span>
+                              <span 
+                                className="text-sm font-medium text-gray-800 cursor-pointer hover:text-blue-600 transition-colors"
+                                onClick={() => {
+                                  if (storageAccountAddress) {
+                                    navigator.clipboard.writeText(storageAccountAddress.toString());
+                                    showMessage('Shelby Storage Address copied to clipboard!', 'success');
+                                  }
+                                }}
+                              >
+                                {storageAccountAddress ? `${storageAccountAddress.toString().slice(0, 6)}...${storageAccountAddress.toString().slice(-4)}` : 'Not available'}
+                              </span>
+                            </div>
+                          </div>
+                        )}
                         <div className="flex items-center p-3 rounded-lg bg-white">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
@@ -786,12 +1133,32 @@ function UploadPage({ signAndSubmitTransaction }) {
                           <div className="flex justify-between items-center w-full">
                             <span className="text-sm font-medium text-gray-700">Network</span>
                             <div className="flex items-center overflow-visible">
-                              {network?.name === 'custom' && (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-green-600 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                </svg>
+                              {connected && (
+                                network?.name === 'custom' ? (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-green-600 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                  </svg>
+                                ) : (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-red-600 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                  </svg>
+                                )
                               )}
-                              <span className="text-sm font-medium text-gray-800">{network?.name === 'custom' ? 'shelbynet' : network?.name || 'Unknown Network'}</span>
+                              {solanaConnected && (() => {
+                                const isDevnet = solanaNetworkInfo?.networkType === 'Solana Devnet';
+                                return isDevnet ? (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-green-600 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                  </svg>
+                                ) : (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-red-600 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                  </svg>
+                                );
+                              })()}
+                              <span className="text-sm font-medium text-gray-800">
+                                {connected ? (network?.name === 'custom' ? 'shelbynet' : network?.name || 'Unknown Network') : (solanaConnected ? getSolanaNetwork() : 'Not Connected')}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -801,7 +1168,9 @@ function UploadPage({ signAndSubmitTransaction }) {
                           </svg>
                           <div className="flex justify-between items-center w-full">
                             <span className="text-sm font-medium text-gray-700">APT Balance</span>
-                            <span className="text-sm font-medium text-gray-800">{aptBalance ? `${(parseInt(aptBalance) / 100000000).toFixed(4)}` : 'Loading...'}</span>
+                            <span className="text-sm font-medium text-gray-800">
+                              {(connected || solanaConnected) ? (aptBalance ? `${(parseInt(aptBalance) / 100000000).toFixed(4)}` : 'Loading...') : 'N/A'}
+                            </span>
                           </div>
                         </div>
                         <div className="flex items-center p-3 rounded-lg bg-white">
@@ -810,35 +1179,52 @@ function UploadPage({ signAndSubmitTransaction }) {
                           </svg>
                           <div className="flex justify-between items-center w-full">
                             <span className="text-sm font-medium text-gray-700">ShelbyUSD Balance</span>
-                            <span className="text-sm font-medium text-gray-800">{shelbyUsdBalance ? `${(parseInt(shelbyUsdBalance) / 100000000).toFixed(4)}` : 'Loading...'}</span>
+                            <span className="text-sm font-medium text-gray-800">
+                              {(connected || solanaConnected) ? (shelbyUsdBalance ? `${(parseInt(shelbyUsdBalance) / 100000000).toFixed(4)}` : 'Loading...') : 'N/A'}
+                            </span>
                           </div>
                         </div>
                       </div>
                     </div>
                 
                 <div className="space-y-3">
-                  <a 
-                    href={`https://docs.shelby.xyz/apis/faucet/shelbyusd?address=${parseAddress(account.address)}`} 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between"
-                  >
-                    <span>Claim ShelbyUSD</span>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                    </svg>
-                  </a>
-                  <a 
-                    href={`https://docs.shelby.xyz/apis/faucet/aptos?address=${parseAddress(account.address)}`} 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block bg-green-50 hover:bg-green-100 text-green-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between"
-                  >
-                    <span>Claim APT</span>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                    </svg>
-                  </a>
+                  {connected && account ? (
+                    <>
+                      <button 
+                        onClick={() => handleAptosFaucet()}
+                        className="block bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between w-full"
+                      >
+                        <span>Claim ShelbyUSD</span>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                        </svg>
+                      </button>
+                      <a 
+                        href={`https://docs.shelby.xyz/apis/faucet/aptos?address=${parseAddress(account.address)}`} 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block bg-green-50 hover:bg-green-100 text-green-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between"
+                      >
+                        <span>Claim APT</span>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                        </svg>
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleSolanaFaucet}
+                        disabled={faucetLoading}
+                        className="block bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between"
+                      >
+                        <span>Claim ShelbyUSD & APT</span>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                        </svg>
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (
@@ -856,11 +1242,6 @@ function UploadPage({ signAndSubmitTransaction }) {
         </main>
 
         <footer className="bg-white rounded-xl shadow-lg p-8 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-              <img src="/logo.png" alt="Logo" className="w-8 h-8 object-cover rounded-full" />
-            </div>
-          </div>
           <p className="text-gray-600">© 2026 Shelby Upload Tool | Built with Shelby Protocol</p>
           <div className="mt-4">
             <a 
@@ -882,13 +1263,24 @@ function UploadPage({ signAndSubmitTransaction }) {
 }
 
 function App() {
-  const { connect, disconnect, connected, account, wallets, network, signAndSubmitTransaction } = useWallet();
+  const { connect, disconnect, connected, account, wallets, network, signAndSubmitTransaction } = useAptosWallet();
+  const { wallet: solanaWallet, status: solanaStatus, connectors: solanaConnectors, connect: solanaConnect, disconnect: solanaDisconnect } = useWalletConnection();
+  
+  const solanaConnected = solanaStatus === "connected";
+  const solanaPublicKey = solanaWallet?.account?.address;
+  
+  const [walletType, setWalletType] = useState(null); // 'aptos' or 'solana'
   const [showConnectMenu, setShowConnectMenu] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('info');
   const isHoveringButtonRef = useRef(false);
   const isHoveringMenuRef = useRef(false);
   const menuTimerRef = useRef(null);
+  const [walletState, setWalletState] = useState(0);
+  
+  useEffect(() => {
+    setWalletState(prev => prev + 1);
+  }, [solanaWallet]);
 
   const showMessage = (text, type = 'info') => {
     setMessage(text);
@@ -935,6 +1327,10 @@ function App() {
         setShowConnectMenu(false);
       }
     }, 200);
+  };
+
+  const checkPhantomWallet = () => {
+    return typeof window !== 'undefined' && window.solana && window.solana.isPhantom;
   };
 
   const handleMenuMouseEnter = () => {
@@ -994,143 +1390,201 @@ function App() {
     };
   }, [showConnectMenu]);
 
+  const withRetry = async (fn, retries = 3, delay = 1000) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        return await fn();
+      } catch (error) {
+        if (i === retries - 1) {
+          throw error;
+        }
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  };
+
   return (
     <Router>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        <nav className="bg-white shadow-md relative">
-          <div className="max-w-4xl mx-auto px-4 overflow-visible">
-            {message && (
-              <div className={`mt-2 mb-2 p-4 rounded-lg ${messageType === 'error' ? 'bg-red-50 border border-red-200 text-red-800' : messageType === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-blue-50 border border-blue-200 text-blue-800'}`}>
-                {message}
-              </div>
-            )}
-            <div className="flex justify-between min-h-16 overflow-visible">
-              <div className="flex items-center flex-1">
-                <div className="flex items-center space-x-6">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
-                      <img src="/logo.png" alt="Logo" className="w-full h-full object-cover rounded-full" />
+          <nav className="bg-white shadow-md relative">
+            <div className="max-w-4xl mx-auto px-4 overflow-visible">
+              <div className="flex justify-between min-h-16 overflow-visible">
+                <div className="flex items-center flex-1">
+                  <div className="flex items-center space-x-6">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
+                        <img src="/logo.png" alt="Logo" className="w-full h-full object-cover rounded-full" />
+                      </div>
+                      <span className="font-bold text-xl text-gray-900 whitespace-nowrap hidden sm:inline">Shelby Upload Tool</span>
                     </div>
-                    <span className="font-bold text-xl text-gray-900 whitespace-nowrap hidden sm:inline">Shelby Upload Tool</span>
-                  </div>
-                  <div className="flex space-x-4">
-                  <Link 
-                    to="/" 
-                    className="text-gray-700 hover:text-blue-600 inline-flex items-center px-3 py-2 border-b-2 border-transparent hover:border-blue-500 text-sm font-medium transition-colors duration-200"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <span className="hidden md:inline">Upload</span>
-                  </Link>
-                  <Link 
-                    to="/blobs" 
-                    className="text-gray-700 hover:text-blue-600 inline-flex items-center px-3 py-2 border-b-2 border-transparent hover:border-blue-500 text-sm font-medium transition-colors duration-200"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span className="hidden md:inline">My Blobs</span>
-                  </Link>
+                    <div className="flex space-x-4">
+                    <Link 
+                      to="/" 
+                      className="text-gray-700 hover:text-blue-600 inline-flex items-center px-3 py-2 border-b-2 border-transparent hover:border-blue-500 text-sm font-medium transition-colors duration-200"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <span className="hidden md:inline">Upload</span>
+                    </Link>
+                    <Link 
+                      to="/blobs" 
+                      className="text-gray-700 hover:text-blue-600 inline-flex items-center px-3 py-2 border-b-2 border-transparent hover:border-blue-500 text-sm font-medium transition-colors duration-200"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span className="hidden md:inline">My Blobs</span>
+                    </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex items-center overflow-visible relative">
-                {connected ? (
-                  <button
-                    onClick={disconnect}
-                    className="bg-gradient-to-r from-green-600 to-green-700 text-white font-medium px-4 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 hover:shadow-lg hover:from-green-700 hover:to-green-800 transform hover:-translate-y-1"
-                  >
-                    <span className="text-sm font-mono">
-                      {account?.address ? (
-                        (() => {
-                          const parsedAddress = parseAddress(account.address);
-                          return parsedAddress ? `${parsedAddress.slice(0, 6)}...${parsedAddress.slice(-4)}` : 'Invalid Address';
-                        })()
-                      ) : 'Unknown Address'}
-                    </span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                  </button>
-                ) : (
-                  <div className="relative overflow-visible">
-                    <button 
-                      className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg flex items-center space-x-2 transition-all duration-300 hover:shadow-lg hover:from-blue-700 hover:to-blue-800 transform hover:-translate-y-1"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowConnectMenu(!showConnectMenu);
-                      }}
-                      onMouseEnter={handleButtonMouseEnter}
-                      onMouseLeave={handleButtonMouseLeave}
+                <div className="flex items-center overflow-visible relative">
+                  {connected ? (
+                    <button
+                      onClick={disconnect}
+                      className="bg-gradient-to-r from-green-600 to-green-700 text-white font-medium px-4 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 hover:shadow-lg hover:from-green-700 hover:to-green-800 transform hover:-translate-y-1"
                     >
-                      <span>Connect Wallet</span>
+                      <span className="text-sm font-mono">
+                        {account?.address ? (
+                          (() => {
+                            const parsedAddress = parseAddress(account.address);
+                            return parsedAddress ? `${parsedAddress.slice(0, 6)}...${parsedAddress.slice(-4)}` : 'Invalid Address';
+                          })()
+                        ) : 'Unknown Address'}
+                      </span>
+                      <span className="text-xs bg-green-800 px-2 py-0.5 rounded-full">APT</span>
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
                     </button>
-                    {showConnectMenu && (
-                      <div 
-                        className="absolute right-0 top-full mt-2 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 md:w-56"
-                        onMouseEnter={handleMenuMouseEnter}
-                        onMouseLeave={handleMenuMouseLeave}
+                  ) : solanaConnected ? (
+                    <button
+                      onClick={solanaDisconnect}
+                      className="bg-gradient-to-r from-purple-600 to-purple-700 text-white font-medium px-4 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 hover:shadow-lg hover:from-purple-700 hover:to-purple-800 transform hover:-translate-y-1"
+                    >
+                      <span className="text-sm font-mono">
+                        {solanaPublicKey ? (
+                          `${solanaPublicKey.toString().slice(0, 6)}...${solanaPublicKey.toString().slice(-4)}`
+                        ) : 'Unknown Address'}
+                      </span>
+                      <span className="text-xs bg-purple-800 px-2 py-0.5 rounded-full">SOL</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <div className="relative overflow-visible">
+                      <button 
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg flex items-center space-x-2 transition-all duration-300 hover:shadow-lg hover:from-blue-700 hover:to-blue-800 transform hover:-translate-y-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowConnectMenu(!showConnectMenu);
+                        }}
+                        onMouseEnter={handleButtonMouseEnter}
+                        onMouseLeave={handleButtonMouseLeave}
                       >
-                        <div className="py-2">
-                          <div className="px-4 py-2 border-b border-gray-700">
-                            <p className="text-xs font-semibold text-gray-400 uppercase">Select Wallet</p>
-                          </div>
-                          {wallets.filter(wallet => !wallet.name.toLowerCase().includes('google') && !wallet.name.toLowerCase().includes('apple')).length === 0 ? (
-                            <div className="px-4 py-6 text-center">
-                              <p className="text-sm text-gray-400 mb-4">No wallets detected</p>
-                              <a 
-                                href="https://petra.app/" 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="inline-block px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
-                              >
-                                Install Petra Wallet
-                              </a>
+                        <span>Connect Wallet</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {showConnectMenu && (
+                        <div 
+                          className="absolute right-0 top-full mt-2 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 md:w-56 z-50"
+                          onMouseEnter={handleMenuMouseEnter}
+                          onMouseLeave={handleMenuMouseLeave}
+                        >
+                          <div className="py-2">
+                            <div className="px-4 py-2 border-b border-gray-700">
+                              <p className="text-xs font-semibold text-gray-400 uppercase">Aptos Wallets</p>
                             </div>
-                          ) : (
-                            wallets.map((wallet) => {
-                              if (wallet.name.toLowerCase().includes('google') || wallet.name.toLowerCase().includes('apple')) {
-                                return null;
-                              }
-                              return (
+                            {wallets.filter(wallet => !wallet.name.toLowerCase().includes('google') && !wallet.name.toLowerCase().includes('apple')).length === 0 ? (
+                              <div className="px-4 py-6 text-center">
+                                <p className="text-sm text-gray-400 mb-4">No Aptos wallets detected</p>
+                                <a 
+                                  href="https://petra.app/" 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="inline-block px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+                                >
+                                  Install Petra Wallet
+                                </a>
+                              </div>
+                            ) : (
+                              wallets.map((wallet) => {
+                                if (wallet.name.toLowerCase().includes('google') || wallet.name.toLowerCase().includes('apple')) {
+                                  return null;
+                                }
+                                return (
+                                  <button
+                                    key={wallet.name}
+                                    onClick={() => handleConnect(wallet.name)}
+                                    className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                                  >
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-6 h-6 rounded-full overflow-hidden">
+                                        <img src={wallet.icon} alt={wallet.name} className="w-full h-full object-cover" />
+                                      </div>
+                                      <span>{wallet.name}</span>
+                                    </div>
+                                  </button>
+                                );
+                              })
+                            )}
+                            
+                            <div className="px-4 py-2 border-b border-gray-700">
+                              <p className="text-xs font-semibold text-gray-400 uppercase">Solana Wallets</p>
+                            </div>
+                            <div className="px-4 py-4 space-y-2">
+                              {solanaConnectors.map((connector) => (
                                 <button
-                                  key={wallet.name}
-                                  onClick={() => handleConnect(wallet.name)}
-                                  className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                                  key={connector.id}
+                                  onClick={async () => {
+                                    await solanaConnect(connector.id);
+                                    setShowConnectMenu(false);
+                                  }}
+                                  className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-gray-700 transition-colors rounded-lg"
                                 >
                                   <div className="flex items-center space-x-3">
                                     <div className="w-6 h-6 rounded-full overflow-hidden">
-                                      <img src={wallet.icon} alt={wallet.name} className="w-full h-full object-cover" />
+                                      <img src={connector.icon} alt={connector.name} className="w-full h-full object-cover" />
                                     </div>
-                                    <span>{wallet.name}</span>
+                                    <span>{connector.name}</span>
                                   </div>
                                 </button>
-                              );
-                            })
-                          )}
+                              ))}
+                            </div>
 
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </nav>
+          </nav>
 
-        <main>
-          <Routes>
-            <Route path="/" element={<UploadPage signAndSubmitTransaction={signAndSubmitTransaction || (() => Promise.reject(new Error('signAndSubmitTransaction is not available')))} />} />
-            <Route path="/blobs" element={<Blobs />} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+          <main>
+            <Routes>
+              <Route path="/" element={
+                <UploadPage 
+                  signAndSubmitTransaction={signAndSubmitTransaction || (() => Promise.reject(new Error('signAndSubmitTransaction is not available')))} 
+                  showMessage={showMessage} 
+                /> 
+              } />
+              <Route path="/blobs" element={<Blobs />} />
+            </Routes>
+          </main>
+          
+          {message && (
+            <div className={`fixed bottom-4 right-4 p-4 rounded-lg shadow-lg z-50 max-w-md ${messageType === 'error' ? 'bg-red-50 border border-red-200 text-red-800' : messageType === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-blue-50 border border-blue-200 text-blue-800'}`}>
+              {message}
+            </div>
+          )}
+        </div>
+      </Router>
   );
 }
 

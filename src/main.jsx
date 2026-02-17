@@ -5,14 +5,10 @@ import ErrorBoundary from './ErrorBoundary.jsx'
 import './index.css'
 import { AptosWalletAdapterProvider } from '@aptos-labs/wallet-adapter-react'
 import { Network } from '@aptos-labs/ts-sdk'
+import { SolanaWalletProvider } from './SolanaWalletProvider.jsx'
 
 import { Buffer } from 'buffer'
-if (typeof window !== 'undefined') {
-  window.Buffer = Buffer
-}
-if (typeof global !== 'undefined') {
-  global.Buffer = Buffer
-}
+globalThis.Buffer = Buffer
 
 if (!Object.prototype.toStringLongWithoutPrefix) {
   Object.defineProperty(Object.prototype, 'toStringLongWithoutPrefix', {
@@ -44,10 +40,12 @@ root.render(
         }}
         plugins={[]}
         autoConnect={false}
-        onError={(error) => {
+        onError={() => {
         }}
       >
-        <App />
+        <SolanaWalletProvider>
+          <App />
+        </SolanaWalletProvider>
       </AptosWalletAdapterProvider>
     </ErrorBoundary>
   </React.StrictMode>

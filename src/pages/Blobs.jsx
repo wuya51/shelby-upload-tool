@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
+import { useWallet as useAptosWallet } from '@aptos-labs/wallet-adapter-react';
+import { useWalletConnection } from "@solana/react-hooks";
+import { useStorageAccount } from "@shelby-protocol/solana-kit/react";
+import { useSolanaNetwork } from '../SolanaWalletProvider.jsx';
 
 const getShelbyApiUrl = () => {
   const baseUrl = import.meta.env.VITE_SHELBY_API_URL || "https://api.shelbynet.shelby.xyz";
@@ -7,7 +10,17 @@ const getShelbyApiUrl = () => {
 };
 
 function Blobs() {
-  const { connected, account } = useWallet();
+  const { connected: aptosConnected, account: aptosAccount } = useAptosWallet();
+  const { wallet, status: solanaStatus } = useWalletConnection();
+  const { shelbyClient } = useSolanaNetwork();
+  const { storageAccountAddress } = useStorageAccount({
+    client: shelbyClient,
+    wallet,
+  });
+  
+  const solanaConnected = solanaStatus === "connected";
+  const [phantomConnected, setPhantomConnected] = useState(false);
+  const [phantomPublicKey, setPhantomPublicKey] = useState(null);
   const [blobs, setBlobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -82,13 +95,48 @@ function Blobs() {
   };
 
   useEffect(() => {
+    const checkPhantomWallet = () => {
+      if (typeof window !== 'undefined' && window.solana && window.solana.isPhantom) {
+        setPhantomConnected(window.solana.isConnected);
+        setPhantomPublicKey(window.solana.publicKey);
+
+        window.solana.on('connect', () => {
+          setPhantomConnected(true);
+          setPhantomPublicKey(window.solana.publicKey);
+        });
+
+        window.solana.on('disconnect', () => {
+          setPhantomConnected(false);
+          setPhantomPublicKey(null);
+        });
+
+        window.solana.on('accountChanged', (accounts) => {
+          setPhantomPublicKey(accounts[0]);
+        });
+      }
+    };
+
+    checkPhantomWallet();
+  }, []);
+
+  useEffect(() => {
     const fetchBlobs = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        if (!connected || !account || !account.address) {
-          setError('Please connect your wallet to view uploaded files');
+        let currentAccountAddress = null;
+        
+        if (aptosConnected && aptosAccount && aptosAccount.address) {
+          currentAccountAddress = parseAddress(aptosAccount.address);
+        } else if (solanaConnected && storageAccountAddress) {
+          currentAccountAddress = storageAccountAddress.toString();
+        } else if (phantomConnected && phantomPublicKey) {
+          currentAccountAddress = phantomPublicKey.toString();
+        }
+
+        if (!currentAccountAddress) {
+          setBlobs([]);
           setLoading(false);
           return;
         }
@@ -106,8 +154,6 @@ function Blobs() {
           network: Network.SHELBYNET,
           apiKey: SHELBY_API_KEY
         });
-        
-        const currentAccountAddress = parseAddress(account.address);
         
         if (!currentAccountAddress) {
           throw new Error('Failed to parse account address');
@@ -174,7 +220,7 @@ function Blobs() {
     };
 
     fetchBlobs();
-  }, [connected, account]);
+  }, [aptosConnected, aptosAccount, solanaConnected, storageAccountAddress, phantomConnected, phantomPublicKey]);
 
   const handleDownload = (blobName) => {
   };
@@ -352,27 +398,23 @@ function Blobs() {
                                             onError={(e) => {
                                               try {
                                                 const imgElement = e.target;
-                                                // Check if the element is still in the document
+                                                
                                                 if (!document.contains(imgElement)) {
                                                   return;
                                                 }
                                                 
                                                 const parentElement = imgElement.parentElement;
                                                 if (parentElement && document.contains(parentElement)) {
-                                                  // Create error message element
                                                   const errorDiv = document.createElement('div');
                                                   errorDiv.className = 'p-4 text-sm text-gray-500';
                                                   errorDiv.innerHTML = `<strong>Image preview failed</strong><br /><small class="text-xs text-gray-400">Check if the file exists and is accessible</small>`;
                                                   
-                                                  // Replace img with error message
                                                   try {
                                                     parentElement.replaceChild(errorDiv, imgElement);
                                                   } catch (replaceError) {
-                                                    // Ignore replaceChild errors
                                                   }
                                                 }
                                               } catch (error) {
-                                                // Ignore any errors
                                               }
                                             }}
                                           />

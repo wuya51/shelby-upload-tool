@@ -3,12 +3,17 @@ import react from '@vitejs/plugin-react'
 import { fileURLToPath, URL } from 'node:url'
 import path from 'path'
 import fs from 'fs'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    nodePolyfills()
+  ],
   server: {
     port: 3001,
+    strictPort: true,
     open: true,
     historyApiFallback: {
       disableDotRule: true,
@@ -58,13 +63,12 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-      'buffer': 'buffer'
+      '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
   optimizeDeps: {
-    include: ['buffer'],
-    exclude: ['@shelby-protocol/sdk']
+    exclude: ['@shelby-protocol/sdk', '@solana/client'],
+    include: ['@shelby-protocol/react', '@shelby-protocol/solana-kit/react']
   },
   envDir: './',
   build: {

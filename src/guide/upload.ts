@@ -52,7 +52,6 @@ async function main() {
 
 		const uploadFile = await navigateFileTree(join(process.cwd(), "assets"))
 		
-		// Calculate file size metadata
 		const fileStats = statSync(uploadFile)
 		const fileSizeMB = (fileStats.size / (1024 * 1024)).toFixed(2)
 

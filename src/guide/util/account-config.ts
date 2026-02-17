@@ -17,7 +17,6 @@ export default async function accountConfig(config: ShelbyConfig): Promise<
 		return undefined
 	}
 	if (accountNames.length === 1) {
-		// Only one account, so let's use it.
 		console.log(
 			chalk.green("✔"),
 			chalk.bold.whiteBright(
@@ -36,7 +35,6 @@ export default async function accountConfig(config: ShelbyConfig): Promise<
 		}
 	}
 	const defaultAccount = config.default_account || undefined
-	// There's multiple accounts. Maybe they want to use the default account?
 	if (defaultAccount && accountNames.includes(defaultAccount)) {
 		const address = accounts[defaultAccount].address
 		const private_key = accounts[defaultAccount].private_key
@@ -52,7 +50,6 @@ export default async function accountConfig(config: ShelbyConfig): Promise<
 			}
 		}
 	}
-	// Maybe not, let them choose...
 	const choices = accountNames.map((name) => ({
 		name: `${name} (${truncate(accounts[name].address)})`,
 		value: name,

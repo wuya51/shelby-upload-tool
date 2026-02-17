@@ -43,7 +43,6 @@ try {
 		...apiSettings,
 	})
 	if (!writeError) {
-		// FIXME: Assuming the user is always on shelbynet at this point
 		console.log(
 			chalk.bold.whiteBright(
 				"Created",
