@@ -531,8 +531,9 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
 
         const expirationMicros = (Date.now() + expirationDays * 24 * 60 * 60 * 1000) * 1000;
 
-        const arrayBuffer = await file.arrayBuffer();
-        const blobData = new Uint8Array(arrayBuffer);
+        const blobData = currentUploadData.fileData instanceof Uint8Array 
+          ? currentUploadData.fileData 
+          : new Uint8Array(currentUploadData.fileData);
 
         setUploadStatus('Uploading blob...');
 
