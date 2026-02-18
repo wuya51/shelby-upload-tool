@@ -36,7 +36,9 @@ root.render(
       <AptosWalletAdapterProvider
         dappConfig={{
           networkName: 'custom',
-          aptosApiKey: import.meta.env.VITE_APTOS_API_KEY || ''
+          aptosApiKey: import.meta.env.VITE_APTOS_API_KEY || '',
+          fullnodeUrl: import.meta.env.VITE_SHELBY_FULLNODE || 'https://api.shelbynet.shelby.xyz/v1',
+          indexerUrl: import.meta.env.VITE_SHELBY_INDEXER || 'https://api.shelbynet.shelby.xyz/v1/graphql'
         }}
         plugins={[]}
         autoConnect={false}
