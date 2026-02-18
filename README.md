@@ -6,20 +6,21 @@ Shelby File Upload Tool is a file upload application developed based on React an
 
 ### Core Features
 
-- Upload files to the Shelby network
+- Upload files to Shelby network
 - Generate real Blob Merkle Root
-- Support multiple wallet connections (Petra, OKX Wallet, etc.)
+- Support multiple wallet connections (Petra, OKX Wallet, Phantom, Solflare, etc.)
 - Display wallet connection status and network information
 - View uploaded Blob files list
+- Support both Aptos and Solana wallets
 
 ## Technology Stack
 
 - **Frontend Framework**: React 18+
 - **Build Tool**: Vite 5.x
-- **Blockchain Interaction**: Aptos SDK
+- **Blockchain Interaction**: Aptos SDK, Solana Web3.js
 - **File Storage**: Shelby Protocol SDK
 - **Routing Management**: React Router
-- **Wallet Connection**: Aptos Wallet Adapter
+- **Wallet Connection**: Aptos Wallet Adapter, Solana Wallet Adapter
 - **WebAssembly**: Used for generating Blob Merkle Root
 
 ## Installation and Setup
@@ -76,10 +77,25 @@ All client-side environment variables must use the `VITE_` prefix to ensure Vite
 4. **Wait for Transaction Confirmation**: Wait for the transaction to complete on-chain
 5. **Upload File Data**: Use multipart upload to upload file data to the Shelby network
 
+**Aptos Wallet Upload Process**:
+1. Select file and prepare upload
+2. View upload details (file size, blob name, expiration time)
+3. Submit transaction and sign with Aptos wallet
+4. Wait for transaction confirmation
+
+**Solana Wallet Upload Process**:
+1. Select file and prepare upload
+2. Network warning modal appears (requires Solana Devnet)
+3. Choose to cancel or confirm upload
+4. Sign transaction with Solana wallet
+5. Upload file directly using Shelby Protocol SDK
+
 ### Wallet Connection
 
-- Support multiple wallet connection methods, including Petra, OKX Wallet, etc.
+- Support multiple wallet connection methods, including Petra, OKX Wallet, Phantom, Solflare, etc.
 - Display wallet truncated address and network status
+- Support both Aptos and Solana wallets
+- Solana wallet network warning modal (requires Solana Devnet)
 
 ### Blob Management
 
