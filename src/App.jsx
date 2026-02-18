@@ -563,10 +563,10 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
         return;
       }
 
-      const { ShelbyClient } = await import("@shelby-protocol/sdk/browser");
+      const { ShelbyClient, Network } = await import("@shelby-protocol/sdk/browser");
 
       const shelbyClient = new ShelbyClient({
-        network: 'shelbynet',
+        network: Network.SHELBYNET,
         apiKey: SHELBY_BEARER_TOKEN
       });
 
