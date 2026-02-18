@@ -17,60 +17,6 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
   
   const solanaConnected = solanaStatus === "connected";
   const solanaPublicKey = wallet?.account?.address;
-  const [solanaNetworkInfo, setSolanaNetworkInfo] = useState(null);
-  
-  const detectWalletNetwork = async () => {
-    if (!solanaConnected || !wallet || !solanaPublicKey) {
-      return null;
-    }
-    
-    const networksToCheck = [
-      { name: 'mainnet', endpoint: clusterApiUrl('mainnet-beta'), genesisHash: '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d' },
-      { name: 'devnet', endpoint: clusterApiUrl('devnet'), genesisHash: 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG' },
-      { name: 'testnet', endpoint: clusterApiUrl('testnet'), genesisHash: '4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY' }
-    ];
-    
-    for (const network of networksToCheck) {
-      try {
-        const connection = new Connection(network.endpoint, 'confirmed');
-        const hash = await connection.getGenesisHash();
-        
-        if (hash === network.genesisHash) {
-          return {
-            key: network.name,
-            name: network.name,
-            networkType: `Solana ${network.name.charAt(0).toUpperCase() + network.name.slice(1)}`,
-            endpoint: network.endpoint,
-            genesisHash: hash
-          };
-        }
-      } catch (error) {
-        continue;
-      }
-    }
-    
-    return null;
-  };
-  
-  useEffect(() => {
-    const detectNetwork = async () => {
-      const detected = await detectWalletNetwork();
-      setSolanaNetworkInfo(detected);
-    };
-    
-    if (solanaConnected) {
-      detectNetwork();
-    } else {
-      setSolanaNetworkInfo(null);
-    }
-  }, [solanaConnected, wallet, solanaPublicKey]);
-  
-  const getSolanaNetwork = () => {
-    if (solanaNetworkInfo?.networkType) {
-      return solanaNetworkInfo.networkType;
-    }
-    return 'Solana Network';
-  };
   
   const { storageAccountAddress, signAndSubmitTransaction: solanaSignAndSubmitTransaction } = useStorageAccount({
     client: shelbyClient,
@@ -91,6 +37,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
   const [uploadData, setUploadData] = useState(null);
   const [uploadStep, setUploadStep] = useState('prepare');
   const [uploadCompleted, setUploadCompleted] = useState(false);
+  const [showNetworkWarning, setShowNetworkWarning] = useState(false);
   const [aptBalance, setAptBalance] = useState(null);
   const [shelbyUsdBalance, setShelbyUsdBalance] = useState(null);
   const [faucetLoading, setFaucetLoading] = useState(false);
@@ -218,6 +165,11 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
       return;
     }
 
+    setShowNetworkWarning(true);
+  };
+
+  const confirmSolanaUpload = async () => {
+    setShowNetworkWarning(false);
     setLoading(true);
     setUploadStatus('Uploading blob...');
 
@@ -343,9 +295,11 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
           const defaultSolanaAuthenticationFunction = '0x1::solana_derivable_account::authenticate';
           const domain = 'shelby';
           
+          const solanaKey = typeof currentAccount === 'string' ? currentAccount : currentAccount.toString();
+          
           const derivedPublicKey = new SolanaDerivedPublicKey({
             domain,
-            solanaPublicKey: currentAccount,
+            solanaPublicKey: solanaKey,
             authenticationFunction: defaultSolanaAuthenticationFunction
           });
           
@@ -1144,20 +1098,13 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
                                   </svg>
                                 )
                               )}
-                              {solanaConnected && (() => {
-                                const isDevnet = solanaNetworkInfo?.networkType === 'Solana Devnet';
-                                return isDevnet ? (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-green-600 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                  </svg>
-                                ) : (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-red-600 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                  </svg>
-                                );
-                              })()}
+                              {solanaConnected && (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-red-600 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                              )}
                               <span className="text-sm font-medium text-gray-800">
-                                {connected ? (network?.name === 'custom' ? 'shelbynet' : network?.name || 'Unknown Network') : (solanaConnected ? getSolanaNetwork() : 'Not Connected')}
+                                {connected ? (network?.name === 'custom' ? 'shelbynet' : network?.name || 'Unknown Network') : (solanaConnected ? 'Please switch to Solana Devnet' : 'Not Connected')}
                               </span>
                             </div>
                           </div>
@@ -1258,6 +1205,34 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
           </div>
         </footer>
       </div>
+      
+      {showNetworkWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
+            <div className="flex items-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h3 className="text-lg font-semibold text-gray-900">Network Warning</h3>
+            </div>
+            <p className="text-gray-700 mb-6">Please switch to Solana Devnet before uploading files. Your wallet must be connected to Solana Devnet to use this application.</p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowNetworkWarning(false)}
+                className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmSolanaUpload}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
+              >
+                Confirm Upload
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1499,7 +1474,7 @@ function App() {
                             <div className="px-4 py-2 border-b border-gray-700">
                               <p className="text-xs font-semibold text-gray-400 uppercase">Aptos Wallets</p>
                             </div>
-                            {wallets.filter(wallet => !wallet.name.toLowerCase().includes('google') && !wallet.name.toLowerCase().includes('apple')).length === 0 ? (
+                            {wallets.filter(wallet => !wallet.name.toLowerCase().includes('google') && !wallet.name.toLowerCase().includes('apple') && !wallet.name.toLowerCase().includes('okx')).length === 0 ? (
                               <div className="px-4 py-6 text-center">
                                 <p className="text-sm text-gray-400 mb-4">No Aptos wallets detected</p>
                                 <a 
@@ -1512,15 +1487,16 @@ function App() {
                                 </a>
                               </div>
                             ) : (
-                              wallets.map((wallet) => {
-                                if (wallet.name.toLowerCase().includes('google') || wallet.name.toLowerCase().includes('apple')) {
-                                  return null;
-                                }
+                              <div className="px-4 py-4 space-y-2">
+                                {wallets.map((wallet) => {
+                                  if (wallet.name.toLowerCase().includes('google') || wallet.name.toLowerCase().includes('apple') || wallet.name.toLowerCase().includes('okx')) {
+                                    return null;
+                                  }
                                 return (
                                   <button
                                     key={wallet.name}
                                     onClick={() => handleConnect(wallet.name)}
-                                    className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                                    className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-gray-700 transition-colors rounded-lg"
                                   >
                                     <div className="flex items-center space-x-3">
                                       <div className="w-6 h-6 rounded-full overflow-hidden">
@@ -1530,14 +1506,15 @@ function App() {
                                     </div>
                                   </button>
                                 );
-                              })
+                              })}
+                              </div>
                             )}
                             
                             <div className="px-4 py-2 border-b border-gray-700">
                               <p className="text-xs font-semibold text-gray-400 uppercase">Solana Wallets</p>
                             </div>
                             <div className="px-4 py-4 space-y-2">
-                              {solanaConnectors.map((connector) => (
+                              {solanaConnectors.filter(connector => !connector.name.toLowerCase().includes('okx') && !connector.name.toLowerCase().includes('bina')).map((connector) => (
                                 <button
                                   key={connector.id}
                                   onClick={async () => {
