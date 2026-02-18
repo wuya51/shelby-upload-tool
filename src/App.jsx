@@ -590,6 +590,8 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
           return;
         }
       }
+      
+      return;
 
       const { ShelbyClient } = await import("@shelby-protocol/sdk/browser");
 
