@@ -536,31 +536,59 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
 
         setUploadStatus('Uploading blob...');
 
-        await uploadBlobs({
-          signer: {
-            account: storageAccountAddress,
-            signAndSubmitTransaction: solanaSignAndSubmitTransaction,
-          },
-          blobs: [
-            {
-              blobName: currentUploadData.uniqueBlobName,
-              blobData,
+        try {
+          await uploadBlobs({
+            signer: {
+              account: storageAccountAddress,
+              signAndSubmitTransaction: solanaSignAndSubmitTransaction,
             },
-          ],
-          expirationMicros,
-        });
+            blobs: [
+              {
+                blobName: currentUploadData.uniqueBlobName,
+                blobData,
+              },
+            ],
+            expirationMicros,
+          });
 
-        const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${storageAccountAddress.toString()}/${currentUploadData.uniqueBlobName}`;
+          const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${storageAccountAddress.toString()}/${currentUploadData.uniqueBlobName}`;
 
-        setUploadStatus('Blob uploaded successfully!');
-        showMessage(`File uploaded successfully! URL: ${blobUrl}`, 'success');
-        setUploadCompleted(true);
-        setUploadStep('prepare');
-        setFile(null);
-        setBlobName('');
-        setUploadData(null);
-        setLoading(false);
-        return;
+          setUploadStatus('Blob uploaded successfully!');
+          showMessage(`File uploaded successfully! URL: ${blobUrl}`, 'success');
+          setUploadCompleted(true);
+          setUploadStep('prepare');
+          setFile(null);
+          setBlobName('');
+          setUploadData(null);
+          setLoading(false);
+          return;
+        } catch (error) {
+          let errorMessage = 'Unknown error';
+          if (typeof error === 'string') {
+            errorMessage = error;
+          } else if (error instanceof Error && error.message) {
+            errorMessage = error.message;
+          } else if (error.toString) {
+            errorMessage = error.toString();
+          }
+          
+          setUploadStatus('');
+          if (errorMessage && (errorMessage.includes('User rejected') || 
+                   errorMessage.includes('Cancel') || 
+                   errorMessage.includes('cancelled') ||
+                   errorMessage.includes('rejected') ||
+                   errorMessage.includes('cancel') ||
+                   errorMessage.includes('CANCELED') ||
+                   errorMessage.includes('USER_REJECTED'))) {
+            showMessage('Transaction cancelled by user', 'info');
+            setUploadStep('upload');
+          } else {
+            showMessage('Upload failed: ' + errorMessage, 'error');
+            setUploadStep('upload');
+          }
+          setLoading(false);
+          return;
+        }
       }
 
       const { ShelbyClient, Network } = await import("@shelby-protocol/sdk/browser");
