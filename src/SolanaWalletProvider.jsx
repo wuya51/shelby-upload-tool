@@ -16,16 +16,16 @@ const isSolanaWallet = (wallet) => {
 
 const NETWORKS = {
   mainnet: {
-    endpoint: "https://api.mainnet-beta.solana.com",
-    name: "Mainnet"
+    endpoint: "https://api.devnet.solana.com",
+    name: "Devnet"
   },
   devnet: {
     endpoint: "https://api.devnet.solana.com",
     name: "Devnet"
   },
   testnet: {
-    endpoint: "https://api.testnet.solana.com",
-    name: "Testnet"
+    endpoint: "https://api.devnet.solana.com",
+    name: "Devnet"
   }
 };
 
@@ -53,7 +53,7 @@ export function SolanaWalletProvider({ children }) {
   const shelbyClient = useMemo(() => new ShelbyClient({
     network: Network.SHELBYNET,
     apiKey: import.meta.env.VITE_SHELBY_BEARER_TOKEN || '',
-  }), [currentNetwork]);
+  }), []);
 
   const switchNetwork = (network) => {
     if (NETWORKS[network]) {
