@@ -412,12 +412,12 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
             function: `${currentUploadData.moduleAddress}::blob_metadata::register_multiple_blobs`,
             functionArguments: [
               [currentUploadData.uniqueBlobName],
-              BigInt(currentUploadData.expirationMicros),
+              currentUploadData.expirationMicros,
               [Array.from(blobMerkleRootBytes)],
-              [BigInt(numChunksets)],
-              [BigInt(currentUploadData.fileSize)],
-              BigInt(parseInt(permissionValue)),
-              BigInt(0)
+              [numChunksets],
+              [currentUploadData.fileSize],
+              parseInt(permissionValue),
+              0
             ]
           }
         };
