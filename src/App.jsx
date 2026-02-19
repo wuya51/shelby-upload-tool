@@ -178,11 +178,51 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
         const fileSize = file.size;
         const expirationMicros = (Date.now() + expirationDays * 24 * 60 * 60 * 1000) * 1000;
         
+        let parsedAddress = null;
+        
+        if (solanaConnected && solanaPublicKey) {
+          try {
+            const { SolanaDerivedPublicKey } = await import('@aptos-labs/derived-wallet-solana');
+            const defaultSolanaAuthenticationFunction = '0x1::solana_derivable_account::authenticate';
+            const domain = 'shelby';
+            
+            let solanaKeyObject;
+            if (typeof solanaPublicKey === 'string') {
+              solanaKeyObject = {
+                toBase58: () => solanaPublicKey
+              };
+            } else if (solanaPublicKey && typeof solanaPublicKey === 'object') {
+              if (typeof solanaPublicKey.toBase58 === 'function') {
+                solanaKeyObject = solanaPublicKey;
+              } else if (typeof solanaPublicKey.toString === 'function') {
+                solanaKeyObject = {
+                  toBase58: () => solanaPublicKey.toString()
+                };
+              } else {
+                throw new Error('Invalid Solana public key format');
+              }
+            } else {
+              throw new Error('No valid Solana account found');
+            }
+            
+            const derivedPublicKey = new SolanaDerivedPublicKey({
+              domain,
+              solanaPublicKey: solanaKeyObject,
+              authenticationFunction: defaultSolanaAuthenticationFunction
+            });
+            
+            parsedAddress = derivedPublicKey.authKey().derivedAddress().toString();
+          } catch (error) {
+            console.error('Failed to derive storage address:', error);
+          }
+        }
+        
         currentUploadData = {
           fileData,
           uniqueBlobName,
           fileSize,
-          expirationMicros
+          expirationMicros,
+          parsedAddress
         };
       }
 
