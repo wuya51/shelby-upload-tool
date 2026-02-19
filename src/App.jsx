@@ -4,8 +4,7 @@ import { useWalletConnection, useClientStore } from "@solana/react-hooks";
 import { Connection, clusterApiUrl } from '@solana/web3.js';
 import { BrowserRouter as Router, Routes, Link, Route } from 'react-router-dom';
 import { Aptos, AptosConfig, Network as AptosNetwork, AccountAddress } from "@aptos-labs/ts-sdk";
-import { useStorageAccount, Network } from "@shelby-protocol/solana-kit/react";
-import { useUploadBlobs } from "@shelby-protocol/react";
+import { useStorageAccount, Network, useUploadBlobs } from "@shelby-protocol/solana-kit/react";
 import Blobs from './pages/Blobs';
 import { useSolanaNetwork } from './SolanaWalletProvider.jsx';
 
