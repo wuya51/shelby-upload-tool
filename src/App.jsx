@@ -20,7 +20,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
   
   const { storageAccountAddress, signAndSubmitTransaction: solanaSignAndSubmitTransaction } = useStorageAccount({
     client: shelbyClient,
-    wallet,
+    wallet: solanaConnected ? wallet : null,
   });
   
   const { mutateAsync: uploadBlobs, isPending: isUploading } = useUploadBlobs({
