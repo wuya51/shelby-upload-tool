@@ -160,11 +160,6 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
       return;
     }
 
-    if (!storageAccountAddress || !solanaSignAndSubmitTransaction) {
-      showMessage('Storage account or signer not available', 'error');
-      return;
-    }
-
     setShowNetworkWarning(true);
   };
 
@@ -174,19 +169,37 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
     setUploadStatus('Preparing Solana upload...');
 
     try {
-      const currentUploadData = uploadData;
+      let currentUploadData = uploadData;
       
       if (!currentUploadData) {
-        showMessage('Upload data is not available', 'error');
-        setLoading(false);
-        return;
+        const arrayBuffer = await readFileAsArrayBuffer(file);
+        const fileData = new Uint8Array(arrayBuffer);
+        const uniqueBlobName = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}-${blobName}`;
+        const fileSize = file.size;
+        const expirationMicros = (Date.now() + expirationDays * 24 * 60 * 60 * 1000) * 1000;
+        
+        currentUploadData = {
+          fileData,
+          uniqueBlobName,
+          fileSize,
+          expirationMicros
+        };
       }
 
-      if (!storageAccountAddress || !solanaSignAndSubmitTransaction) {
-        setUploadStatus('');
-        showMessage('Storage account is initializing. Please try again in a few seconds.', 'info');
-        setLoading(false);
-        return;
+      let attempts = 0;
+      const maxAttempts = 10;
+      const retryDelay = 1000;
+
+      while (!storageAccountAddress || !solanaSignAndSubmitTransaction) {
+        attempts++;
+        if (attempts > maxAttempts) {
+          setUploadStatus('');
+          showMessage('Storage account initialization timed out. Please refresh and try again.', 'error');
+          setLoading(false);
+          return;
+        }
+        setUploadStatus(`Waiting for storage account... (${attempts}/${maxAttempts})`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
       
       if (!solanaPublicKey) {
@@ -195,6 +208,8 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
         setLoading(false);
         return;
       }
+
+      setUploadStatus('Storage account ready. Preparing upload...');
 
       const expirationMicros = (Date.now() + expirationDays * 24 * 60 * 60 * 1000) * 1000;
 
@@ -249,10 +264,10 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
                  errorMessage.includes('CANCELED') ||
                  errorMessage.includes('USER_REJECTED'))) {
           showMessage('Transaction cancelled by user', 'info');
-          setUploadStep('upload');
+          setUploadStep('prepare');
         } else {
           showMessage('Upload failed: ' + errorMessage, 'error');
-          setUploadStep('upload');
+          setUploadStep('prepare');
         }
         setLoading(false);
         return;
@@ -432,11 +447,20 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
       if (walletType === 'solana') {
         setUploadStatus('Preparing Solana upload...');
         
-        if (!storageAccountAddress || !solanaSignAndSubmitTransaction) {
-          setUploadStatus('');
-          showMessage('Storage account is initializing. Please try again in a few seconds.', 'info');
-          setLoading(false);
-          return;
+        let attempts = 0;
+        const maxAttempts = 5;
+        const retryDelay = 1000;
+
+        while (!storageAccountAddress || !solanaSignAndSubmitTransaction) {
+          attempts++;
+          if (attempts > maxAttempts) {
+            setUploadStatus('');
+            showMessage('Storage account initialization timed out. Please refresh and try again.', 'error');
+            setLoading(false);
+            return;
+          }
+          setUploadStatus(`Waiting for storage account... (${attempts}/${maxAttempts})`);
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
         }
         
         if (!solanaPublicKey) {
@@ -445,6 +469,8 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
           setLoading(false);
           return;
         }
+
+        setUploadStatus('Storage account ready. Preparing upload...');
 
         const expirationMicros = (Date.now() + expirationDays * 24 * 60 * 60 * 1000) * 1000;
 
