@@ -212,15 +212,17 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
           apiKey: import.meta.env.VITE_SHELBY_BEARER_TOKEN || ''
         });
 
-        await shelbyClient.uploadBlob({
+        await shelbyClient.uploadBlobs({
           signer: {
             account: storageAccountAddress,
             signAndSubmitTransaction: solanaSignAndSubmitTransaction,
           },
-          blob: {
-            name: currentUploadData.uniqueBlobName,
-            data: blobData,
-          },
+          blobs: [
+            {
+              blobName: currentUploadData.uniqueBlobName,
+              blobData,
+            },
+          ],
           expirationMicros,
         });
 
@@ -467,15 +469,17 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
             apiKey: import.meta.env.VITE_SHELBY_BEARER_TOKEN || ''
           });
 
-          await shelbyClient.uploadBlob({
+          await shelbyClient.uploadBlobs({
             signer: {
               account: storageAccountAddress,
               signAndSubmitTransaction: solanaSignAndSubmitTransaction,
             },
-            blob: {
-              name: currentUploadData.uniqueBlobName,
-              data: blobData,
-            },
+            blobs: [
+              {
+                blobName: currentUploadData.uniqueBlobName,
+                blobData,
+              },
+            ],
             expirationMicros,
           });
 
