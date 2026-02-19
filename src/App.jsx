@@ -171,49 +171,95 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
   const confirmSolanaUpload = async () => {
     setShowNetworkWarning(false);
     setLoading(true);
-    setUploadStatus('Uploading blob...');
+    setUploadStatus('Preparing Solana upload...');
 
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const blobData = new Uint8Array(arrayBuffer);
+      const currentUploadData = uploadData;
+      
+      if (!currentUploadData) {
+        showMessage('Upload data is not available', 'error');
+        setLoading(false);
+        return;
+      }
+
+      if (!storageAccountAddress || !solanaSignAndSubmitTransaction) {
+        setUploadStatus('');
+        showMessage('Storage account is initializing. Please try again in a few seconds.', 'info');
+        setLoading(false);
+        return;
+      }
+      
+      if (!solanaPublicKey) {
+        setUploadStatus('');
+        showMessage('Please connect your Solana wallet first', 'error');
+        setLoading(false);
+        return;
+      }
 
       const expirationMicros = (Date.now() + expirationDays * 24 * 60 * 60 * 1000) * 1000;
 
-      await uploadBlobs({
-        signer: {
-          account: storageAccountAddress,
-          signAndSubmitTransaction: solanaSignAndSubmitTransaction,
-        },
-        blobs: [
-          {
-            blobName: file.name,
-            blobData,
+      const blobData = currentUploadData.fileData instanceof Uint8Array 
+        ? currentUploadData.fileData 
+        : new Uint8Array(currentUploadData.fileData);
+
+      setUploadStatus('Uploading blob...');
+
+      try {
+        await uploadBlobs({
+          signer: {
+            account: storageAccountAddress,
+            signAndSubmitTransaction: solanaSignAndSubmitTransaction,
           },
-        ],
-        expirationMicros,
-      });
+          blobs: [
+            {
+              blobName: currentUploadData.uniqueBlobName,
+              blobData,
+            },
+          ],
+          expirationMicros,
+        });
 
-      const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${storageAccountAddress.toString()}/${file.name}`;
+        const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${storageAccountAddress.toString()}/${currentUploadData.uniqueBlobName}`;
 
-      setUploadStatus('Blob uploaded successfully!');
-      showMessage(`File uploaded successfully! URL: ${blobUrl}`, 'success');
-      setUploadCompleted(true);
-      setUploadStep('prepare');
-      setFile(null);
-      setBlobName('');
-      setUploadData(null);
-      setLoading(false);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
-      if (errorMessage.includes('INSUFFICIENT_BALANCE_FOR_TRANSACTION_FEE')) {
-        showMessage('Your account needs funding before uploading. Please click "Fund Account" to add APT for transaction fees.', 'error');
-      } else if (errorMessage.includes('E_INSUFFICIENT_FUNDS')) {
-        showMessage('Your account needs more ShelbyUSD to pay for storage. Please click "Fund Account" to add ShelbyUSD tokens.', 'error');
-      } else {
-        showMessage('Failed to upload file: ' + errorMessage, 'error');
+        setUploadStatus('Blob uploaded successfully!');
+        showMessage(`File uploaded successfully! URL: ${blobUrl}`, 'success');
+        setUploadCompleted(true);
+        setUploadStep('prepare');
+        setFile(null);
+        setBlobName('');
+        setUploadData(null);
+        setLoading(false);
+        return;
+      } catch (error) {
+        let errorMessage = 'Unknown error';
+        if (typeof error === 'string') {
+          errorMessage = error;
+        } else if (error instanceof Error && error.message) {
+          errorMessage = error.message;
+        } else if (error.toString) {
+          errorMessage = error.toString();
+        }
+        
+        setUploadStatus('');
+        if (errorMessage && (errorMessage.includes('User rejected') || 
+                 errorMessage.includes('Cancel') || 
+                 errorMessage.includes('cancelled') ||
+                 errorMessage.includes('rejected') ||
+                 errorMessage.includes('cancel') ||
+                 errorMessage.includes('CANCELED') ||
+                 errorMessage.includes('USER_REJECTED'))) {
+          showMessage('Transaction cancelled by user', 'info');
+          setUploadStep('upload');
+        } else {
+          showMessage('Upload failed: ' + errorMessage, 'error');
+          setUploadStep('upload');
+        }
+        setLoading(false);
+        return;
       }
+    } catch (error) {
       setUploadStatus('');
+      showMessage('Failed to upload file: ' + error.message, 'error');
       setLoading(false);
     }
   };
@@ -231,12 +277,6 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
 
     if (!file) {
       showMessage('Please select a file to upload', 'error');
-      return;
-    }
-
-    if (solanaConnected && !connected) {
-      setWalletType('solana');
-      await handleSolanaUpload(e);
       return;
     }
 
@@ -295,11 +335,28 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
           const defaultSolanaAuthenticationFunction = '0x1::solana_derivable_account::authenticate';
           const domain = 'shelby';
           
-          const solanaKey = typeof currentAccount === 'string' ? currentAccount : currentAccount.toString();
+          let solanaKeyObject;
+          if (typeof currentAccount === 'string') {
+            solanaKeyObject = {
+              toBase58: () => currentAccount
+            };
+          } else if (currentAccount && typeof currentAccount === 'object') {
+            if (typeof currentAccount.toBase58 === 'function') {
+              solanaKeyObject = currentAccount;
+            } else if (typeof currentAccount.toString === 'function') {
+              solanaKeyObject = {
+                toBase58: () => currentAccount.toString()
+              };
+            } else {
+              throw new Error('Invalid Solana public key format');
+            }
+          } else {
+            throw new Error('No valid Solana account found');
+          }
           
           const derivedPublicKey = new SolanaDerivedPublicKey({
             domain,
-            solanaPublicKey: solanaKey,
+            solanaPublicKey: solanaKeyObject,
             authenticationFunction: defaultSolanaAuthenticationFunction
           });
           
@@ -328,6 +385,12 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
       };
 
       setUploadData(uploadDataObj);
+
+      if (solanaConnected && !connected) {
+        await handleSolanaUpload(e);
+        return;
+      }
+
       setUploadStep('upload');
       setUploadStatus('');
     } catch (error) {
@@ -355,8 +418,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
     }
 
     setLoading(true);
-    setUploadStatus('Uploading file...');
-
+    
     try {
       const currentUploadData = uploadData;
 
@@ -367,45 +429,125 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
         throw new Error('API keys are not available');
       }
 
-      const { ClayErasureCodingProvider, generateCommitments } = await import("@shelby-protocol/sdk/browser");
-
-      const provider = await ClayErasureCodingProvider.create();
-
-      const blobCommitments = await generateCommitments(provider, currentUploadData.fileData);
-
-      const blobMerkleRootHex = blobCommitments.blob_merkle_root;
-      
-      const cleanHex = blobMerkleRootHex.startsWith('0x') ? blobMerkleRootHex.slice(2) : blobMerkleRootHex;
-      
-      if (cleanHex.length !== 64) {
-        throw new Error(`Invalid blob_merkle_root length: expected 64 hex characters, got ${cleanHex.length}`);
-      }
-      
-      const blobMerkleRootBytes = new Uint8Array(32);
-      for (let i = 0; i < 32; i++) {
-        blobMerkleRootBytes[i] = parseInt(cleanHex.substring(i * 2, i * 2 + 2), 16);
-      }
-
-      const calculateNumChunksets = (fileSize, chunkSize = 5 * 1024 * 1024) => {
-        if (fileSize <= 0) return 1;
-        return Math.ceil(fileSize / chunkSize);
-      };
-
-      const getPermissionValue = (privacyLevel) => {
-        switch(privacyLevel) {
-          case 'private':
-            return "2";
-          case 'public':
-          default:
-            return "0";
+      if (walletType === 'solana') {
+        setUploadStatus('Preparing Solana upload...');
+        
+        if (!storageAccountAddress || !solanaSignAndSubmitTransaction) {
+          setUploadStatus('');
+          showMessage('Storage account is initializing. Please try again in a few seconds.', 'info');
+          setLoading(false);
+          return;
         }
-      };
+        
+        if (!solanaPublicKey) {
+          setUploadStatus('');
+          showMessage('Please connect your Solana wallet first', 'error');
+          setLoading(false);
+          return;
+        }
 
-      const numChunksets = calculateNumChunksets(currentUploadData.fileSize);
-      const permissionValue = getPermissionValue(currentUploadData.privacyLevel);
+        const expirationMicros = (Date.now() + expirationDays * 24 * 60 * 60 * 1000) * 1000;
 
-      let txResponse;
-      if (walletType === 'aptos') {
+        const blobData = currentUploadData.fileData instanceof Uint8Array 
+          ? currentUploadData.fileData 
+          : new Uint8Array(currentUploadData.fileData);
+
+        setUploadStatus('Uploading blob...');
+
+        try {
+          await uploadBlobs({
+            signer: {
+              account: storageAccountAddress,
+              signAndSubmitTransaction: solanaSignAndSubmitTransaction,
+            },
+            blobs: [
+              {
+                blobName: currentUploadData.uniqueBlobName,
+                blobData,
+              },
+            ],
+            expirationMicros,
+          });
+
+          const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${storageAccountAddress.toString()}/${currentUploadData.uniqueBlobName}`;
+
+          setUploadStatus('Blob uploaded successfully!');
+          showMessage(`File uploaded successfully! URL: ${blobUrl}`, 'success');
+          setUploadCompleted(true);
+          setUploadStep('prepare');
+          setFile(null);
+          setBlobName('');
+          setUploadData(null);
+          setLoading(false);
+          return;
+        } catch (error) {
+          let errorMessage = 'Unknown error';
+          if (typeof error === 'string') {
+            errorMessage = error;
+          } else if (error instanceof Error && error.message) {
+            errorMessage = error.message;
+          } else if (error.toString) {
+            errorMessage = error.toString();
+          }
+          
+          setUploadStatus('');
+          if (errorMessage && (errorMessage.includes('User rejected') || 
+                   errorMessage.includes('Cancel') || 
+                   errorMessage.includes('cancelled') ||
+                   errorMessage.includes('rejected') ||
+                   errorMessage.includes('cancel') ||
+                   errorMessage.includes('CANCELED') ||
+                   errorMessage.includes('USER_REJECTED'))) {
+            showMessage('Transaction cancelled by user', 'info');
+            setUploadStep('upload');
+          } else {
+            showMessage('Upload failed: ' + errorMessage, 'error');
+            setUploadStep('upload');
+          }
+          setLoading(false);
+          return;
+        }
+      } else if (walletType === 'aptos') {
+        setUploadStatus('Uploading file...');
+
+        const { ClayErasureCodingProvider, generateCommitments } = await import("@shelby-protocol/sdk/browser");
+
+        const provider = await ClayErasureCodingProvider.create();
+
+        const blobCommitments = await generateCommitments(provider, currentUploadData.fileData);
+
+        const blobMerkleRootHex = blobCommitments.blob_merkle_root;
+        
+        const cleanHex = blobMerkleRootHex.startsWith('0x') ? blobMerkleRootHex.slice(2) : blobMerkleRootHex;
+        
+        if (cleanHex.length !== 64) {
+          throw new Error(`Invalid blob_merkle_root length: expected 64 hex characters, got ${cleanHex.length}`);
+        }
+        
+        const blobMerkleRootBytes = new Uint8Array(32);
+        for (let i = 0; i < 32; i++) {
+          blobMerkleRootBytes[i] = parseInt(cleanHex.substring(i * 2, i * 2 + 2), 16);
+        }
+
+        const calculateNumChunksets = (fileSize, chunkSize = 5 * 1024 * 1024) => {
+          if (fileSize <= 0) return 1;
+          return Math.ceil(fileSize / chunkSize);
+        };
+
+        const getPermissionValue = (privacyLevel) => {
+          switch(privacyLevel) {
+            case 'private':
+              return "2";
+            case 'public':
+            default:
+              return "0";
+          }
+        };
+
+        const numChunksets = calculateNumChunksets(currentUploadData.fileSize);
+        const permissionValue = getPermissionValue(currentUploadData.privacyLevel);
+
+        let txResponse;
         const transactionPayload = {
           sender: currentUploadData.parsedAddress,
           data: {
@@ -512,188 +654,108 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
           setLoading(false);
           return;
         }
-      } else if (walletType === 'solana') {
-        setUploadStatus('Preparing Solana upload...');
-        
-        if (!storageAccountAddress || !solanaSignAndSubmitTransaction) {
-          setUploadStatus('');
-          showMessage('Storage account is initializing. Please try again in a few seconds.', 'info');
-          setLoading(false);
-          return;
-        }
-        
-        if (!solanaPublicKey) {
-          setUploadStatus('');
-          showMessage('Please connect your Solana wallet first', 'error');
-          setLoading(false);
-          return;
-        }
 
-        const expirationMicros = (Date.now() + expirationDays * 24 * 60 * 60 * 1000) * 1000;
+        const { ShelbyClient } = await import("@shelby-protocol/sdk/browser");
+
+        const shelbyClient = new ShelbyClient({
+          network: Network.SHELBYNET,
+          apiKey: SHELBY_BEARER_TOKEN
+        });
 
         const blobData = currentUploadData.fileData instanceof Uint8Array 
           ? currentUploadData.fileData 
           : new Uint8Array(currentUploadData.fileData);
 
-        setUploadStatus('Uploading blob...');
+        const account = AccountAddress.from(currentUploadData.parsedAddress);
+        const blobName = currentUploadData.uniqueBlobName;
+        const partSize = 5 * 1024 * 1024;
 
-        try {
-          await uploadBlobs({
-            signer: {
-              account: storageAccountAddress,
-              signAndSubmitTransaction: solanaSignAndSubmitTransaction,
-            },
-            blobs: [
-              {
-                blobName: currentUploadData.uniqueBlobName,
-                blobData,
-              },
-            ],
-            expirationMicros,
-          });
+        const baseUrl = shelbyClient.baseUrl;
+        
+        const startUrl = new URL("/shelby/v1/multipart-uploads", baseUrl).toString();
 
-          const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${storageAccountAddress.toString()}/${currentUploadData.uniqueBlobName}`;
-
-          setUploadStatus('Blob uploaded successfully!');
-          showMessage(`File uploaded successfully! URL: ${blobUrl}`, 'success');
-          setUploadCompleted(true);
-          setUploadStep('prepare');
-          setFile(null);
-          setBlobName('');
-          setUploadData(null);
-          setLoading(false);
-          return;
-        } catch (error) {
-          let errorMessage = 'Unknown error';
-          if (typeof error === 'string') {
-            errorMessage = error;
-          } else if (error instanceof Error && error.message) {
-            errorMessage = error.message;
-          } else if (error.toString) {
-            errorMessage = error.toString();
-          }
-          
-          setUploadStatus('');
-          if (errorMessage && (errorMessage.includes('User rejected') || 
-                   errorMessage.includes('Cancel') || 
-                   errorMessage.includes('cancelled') ||
-                   errorMessage.includes('rejected') ||
-                   errorMessage.includes('cancel') ||
-                   errorMessage.includes('CANCELED') ||
-                   errorMessage.includes('USER_REJECTED'))) {
-            showMessage('Transaction cancelled by user', 'info');
-            setUploadStep('upload');
-          } else {
-            showMessage('Upload failed: ' + errorMessage, 'error');
-            setUploadStep('upload');
-          }
-          setLoading(false);
-          return;
-        }
-      }
-      
-      return;
-
-      const { ShelbyClient } = await import("@shelby-protocol/sdk/browser");
-
-      const shelbyClient = new ShelbyClient({
-        network: Network.SHELBYNET,
-        apiKey: SHELBY_BEARER_TOKEN
-      });
-
-      const blobData = currentUploadData.fileData instanceof Uint8Array 
-        ? currentUploadData.fileData 
-        : new Uint8Array(currentUploadData.fileData);
-
-      const account = walletType === 'aptos' ? AccountAddress.from(currentUploadData.parsedAddress) : storageAccountAddress;
-      const blobName = currentUploadData.uniqueBlobName;
-      const partSize = 5 * 1024 * 1024;
-
-      const baseUrl = shelbyClient.baseUrl;
-      
-      const startUrl = new URL("/shelby/v1/multipart-uploads", baseUrl).toString();
-
-      const startResponse = await fetch(startUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${SHELBY_BEARER_TOKEN}`
-        },
-        body: JSON.stringify({
-          rawAccount: walletType === 'aptos' ? account.toString() : account,
-          rawBlobName: blobName,
-          rawPartSize: partSize
-        })
-      });
-
-      let responseBody = '';
-      try {
-        responseBody = await startResponse.text();
-      } catch (error) {
-      }
-
-      if (!startResponse.ok) {
-        throw new Error(`Failed to start multipart upload! status: ${startResponse.status}, body: ${responseBody}`);
-      }
-
-      let uploadId;
-      try {
-        const responseData = JSON.parse(responseBody);
-        uploadId = responseData.uploadId;
-      } catch (error) {
-        throw new Error(`Failed to parse response: ${error.message}, response: ${responseBody}`);
-      }
-      
-      const totalParts = Math.ceil(blobData.length / partSize);
-
-      for (let partIdx = 0; partIdx < totalParts; partIdx++) {
-        const start = partIdx * partSize;
-        const end = Math.min(start + partSize, blobData.length);
-        const partData = blobData.slice(start, end);
-
-        const partUrl = new URL(`/shelby/v1/multipart-uploads/${uploadId}/parts/${partIdx}`, baseUrl).toString();
-        const partResponse = await fetch(partUrl, {
-          method: "PUT",
+        const startResponse = await fetch(startUrl, {
+          method: "POST",
           headers: {
-            "Content-Type": "application/octet-stream",
+            "Content-Type": "application/json",
             "Authorization": `Bearer ${SHELBY_BEARER_TOKEN}`
           },
-          body: partData
+          body: JSON.stringify({
+            rawAccount: account.toString(),
+            rawBlobName: blobName,
+            rawPartSize: partSize
+          })
         });
 
-        if (!partResponse.ok) {
-          throw new Error(`Failed to upload part ${partIdx}! status: ${partResponse.status}`);
+        let responseBody = '';
+        try {
+          responseBody = await startResponse.text();
+        } catch (error) {
         }
-      }
 
-      const completeUrl = new URL(`/shelby/v1/multipart-uploads/${uploadId}/complete`, baseUrl).toString();
-      
-      let completeResponseBody = '';
-      const completeResponse = await fetch(completeUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${SHELBY_BEARER_TOKEN}`
+        if (!startResponse.ok) {
+          throw new Error(`Failed to start multipart upload! status: ${startResponse.status}, body: ${responseBody}`);
         }
-      });
-      
-      try {
-        completeResponseBody = await completeResponse.text();
-      } catch (error) {
+
+        let uploadId;
+        try {
+          const responseData = JSON.parse(responseBody);
+          uploadId = responseData.uploadId;
+        } catch (error) {
+          throw new Error(`Failed to parse response: ${error.message}, response: ${responseBody}`);
+        }
+        
+        const totalParts = Math.ceil(blobData.length / partSize);
+
+        for (let partIdx = 0; partIdx < totalParts; partIdx++) {
+          const start = partIdx * partSize;
+          const end = Math.min(start + partSize, blobData.length);
+          const partData = blobData.slice(start, end);
+
+          const partUrl = new URL(`/shelby/v1/multipart-uploads/${uploadId}/parts/${partIdx}`, baseUrl).toString();
+          const partResponse = await fetch(partUrl, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/octet-stream",
+              "Authorization": `Bearer ${SHELBY_BEARER_TOKEN}`
+            },
+            body: partData
+          });
+
+          if (!partResponse.ok) {
+            throw new Error(`Failed to upload part ${partIdx}! status: ${partResponse.status}`);
+          }
+        }
+
+        const completeUrl = new URL(`/shelby/v1/multipart-uploads/${uploadId}/complete`, baseUrl).toString();
+        
+        let completeResponseBody = '';
+        const completeResponse = await fetch(completeUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${SHELBY_BEARER_TOKEN}`
+          }
+        });
+        
+        try {
+          completeResponseBody = await completeResponse.text();
+        } catch (error) {
+        }
+
+        if (!completeResponse.ok) {
+          throw new Error(`Failed to complete multipart upload! status: ${completeResponse.status}, body: ${completeResponseBody}`);
+        }
+
+        setUploadStatus('');
+
+        setFile(null);
+        setBlobName('');
+        setExpirationDays(365);
+        setUploadData(null);
+        setUploadStep('prepare');
+        setUploadCompleted(true);
       }
-
-      if (!completeResponse.ok) {
-        throw new Error(`Failed to complete multipart upload! status: ${completeResponse.status}, body: ${completeResponseBody}`);
-      }
-
-      setUploadStatus('');
-
-      setFile(null);
-      setBlobName('');
-      setExpirationDays(365);
-      setUploadData(null);
-      setUploadStep('prepare');
-      setUploadCompleted(true);
     } catch (error) {
       setUploadStatus('');
       showMessage('Failed to upload file: ' + error.message, 'error');
