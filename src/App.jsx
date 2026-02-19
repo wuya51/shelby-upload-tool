@@ -386,7 +386,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
 
       setUploadData(uploadDataObj);
 
-      if (solanaConnected && !connected) {
+      if (solanaConnected) {
         await handleSolanaUpload(e);
         return;
       }
