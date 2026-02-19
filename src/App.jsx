@@ -205,14 +205,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
       setUploadStatus('Uploading blob...');
 
       try {
-        const { ShelbyClient } = await import("@shelby-protocol/sdk/browser");
-
-        const shelbyClient = new ShelbyClient({
-          network: Network.SHELBYNET,
-          apiKey: import.meta.env.VITE_SHELBY_BEARER_TOKEN || ''
-        });
-
-        await shelbyClient.uploadBlobs({
+        await uploadBlobs({
           signer: {
             account: storageAccountAddress,
             signAndSubmitTransaction: solanaSignAndSubmitTransaction,
@@ -462,14 +455,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
         setUploadStatus('Uploading blob...');
 
         try {
-          const { ShelbyClient } = await import("@shelby-protocol/sdk/browser");
-
-          const shelbyClient = new ShelbyClient({
-            network: Network.SHELBYNET,
-            apiKey: import.meta.env.VITE_SHELBY_BEARER_TOKEN || ''
-          });
-
-          await shelbyClient.uploadBlobs({
+          await uploadBlobs({
             signer: {
               account: storageAccountAddress,
               signAndSubmitTransaction: solanaSignAndSubmitTransaction,
