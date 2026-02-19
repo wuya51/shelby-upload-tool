@@ -4,7 +4,8 @@ import { useWalletConnection, useClientStore } from "@solana/react-hooks";
 import { Connection, clusterApiUrl } from '@solana/web3.js';
 import { BrowserRouter as Router, Routes, Link, Route } from 'react-router-dom';
 import { Aptos, AptosConfig, Network as AptosNetwork, AccountAddress } from "@aptos-labs/ts-sdk";
-import { useStorageAccount, Network, useUploadBlobs } from "@shelby-protocol/solana-kit/react";
+import { useStorageAccount, Network } from "@shelby-protocol/solana-kit/react";
+import { useUploadBlobs } from "@shelby-protocol/react";
 import Blobs from './pages/Blobs';
 import { useSolanaNetwork } from './SolanaWalletProvider.jsx';
 
@@ -204,17 +205,22 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
       setUploadStatus('Uploading blob...');
 
       try {
-        await uploadBlobs({
+        const { ShelbyClient } = await import("@shelby-protocol/sdk/browser");
+
+        const shelbyClient = new ShelbyClient({
+          network: Network.SHELBYNET,
+          apiKey: import.meta.env.VITE_SHELBY_BEARER_TOKEN || ''
+        });
+
+        await shelbyClient.uploadBlob({
           signer: {
             account: storageAccountAddress,
             signAndSubmitTransaction: solanaSignAndSubmitTransaction,
           },
-          blobs: [
-            {
-              blobName: currentUploadData.uniqueBlobName,
-              blobData,
-            },
-          ],
+          blob: {
+            name: currentUploadData.uniqueBlobName,
+            data: blobData,
+          },
           expirationMicros,
         });
 
@@ -454,17 +460,22 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
         setUploadStatus('Uploading blob...');
 
         try {
-          await uploadBlobs({
+          const { ShelbyClient } = await import("@shelby-protocol/sdk/browser");
+
+          const shelbyClient = new ShelbyClient({
+            network: Network.SHELBYNET,
+            apiKey: import.meta.env.VITE_SHELBY_BEARER_TOKEN || ''
+          });
+
+          await shelbyClient.uploadBlob({
             signer: {
               account: storageAccountAddress,
               signAndSubmitTransaction: solanaSignAndSubmitTransaction,
             },
-            blobs: [
-              {
-                blobName: currentUploadData.uniqueBlobName,
-                blobData,
-              },
-            ],
+            blob: {
+              name: currentUploadData.uniqueBlobName,
+              data: blobData,
+            },
             expirationMicros,
           });
 
