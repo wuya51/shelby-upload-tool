@@ -220,9 +220,15 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
       setUploadStatus('Uploading blob...');
 
       try {
+        let signerAccount = storageAccountAddress;
+        
+        if (currentUploadData.parsedAddress) {
+          signerAccount = currentUploadData.parsedAddress;
+        }
+        
         await uploadBlobs({
           signer: {
-            account: storageAccountAddress,
+            account: signerAccount,
             signAndSubmitTransaction: solanaSignAndSubmitTransaction,
           },
           blobs: [
@@ -481,9 +487,15 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
         setUploadStatus('Uploading blob...');
 
         try {
+          let signerAccount = storageAccountAddress;
+          
+          if (currentUploadData.parsedAddress) {
+            signerAccount = currentUploadData.parsedAddress;
+          }
+          
           await uploadBlobs({
             signer: {
-              account: storageAccountAddress,
+              account: signerAccount,
               signAndSubmitTransaction: solanaSignAndSubmitTransaction,
             },
             blobs: [
