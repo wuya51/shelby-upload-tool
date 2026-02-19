@@ -240,7 +240,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
           expirationMicros,
         });
 
-        const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${storageAccountAddress.toString()}/${currentUploadData.uniqueBlobName}`;
+        const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${signerAccount.toString()}/${currentUploadData.uniqueBlobName}`;
 
         setUploadStatus('Blob uploaded successfully!');
         showMessage(`File uploaded successfully! URL: ${blobUrl}`, 'success');
@@ -507,7 +507,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
             expirationMicros,
           });
 
-          const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${storageAccountAddress.toString()}/${currentUploadData.uniqueBlobName}`;
+          const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${signerAccount.toString()}/${currentUploadData.uniqueBlobName}`;
 
           setUploadStatus('Blob uploaded successfully!');
           showMessage(`File uploaded successfully! URL: ${blobUrl}`, 'success');
