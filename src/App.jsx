@@ -220,9 +220,15 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
       setUploadStatus('Uploading blob...');
 
       try {
+        let signerAccount = storageAccountAddress;
+        
+        if (currentUploadData.parsedAddress) {
+          signerAccount = currentUploadData.parsedAddress;
+        }
+        
         await uploadBlobs({
           signer: {
-            account: storageAccountAddress,
+            account: signerAccount,
             signAndSubmitTransaction: solanaSignAndSubmitTransaction,
           },
           blobs: [
@@ -234,7 +240,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
           expirationMicros,
         });
 
-        const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${storageAccountAddress.toString()}/${currentUploadData.uniqueBlobName}`;
+        const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${signerAccount.toString()}/${currentUploadData.uniqueBlobName}`;
 
         setUploadStatus('Blob uploaded successfully!');
         showMessage(`File uploaded successfully! URL: ${blobUrl}`, 'success');
@@ -481,9 +487,15 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
         setUploadStatus('Uploading blob...');
 
         try {
+          let signerAccount = storageAccountAddress;
+          
+          if (currentUploadData.parsedAddress) {
+            signerAccount = currentUploadData.parsedAddress;
+          }
+          
           await uploadBlobs({
             signer: {
-              account: storageAccountAddress,
+              account: signerAccount,
               signAndSubmitTransaction: solanaSignAndSubmitTransaction,
             },
             blobs: [
@@ -495,7 +507,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage }) {
             expirationMicros,
           });
 
-          const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${storageAccountAddress.toString()}/${currentUploadData.uniqueBlobName}`;
+          const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${signerAccount.toString()}/${currentUploadData.uniqueBlobName}`;
 
           setUploadStatus('Blob uploaded successfully!');
           showMessage(`File uploaded successfully! URL: ${blobUrl}`, 'success');
