@@ -366,16 +366,12 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
           : new Uint8Array(currentUploadData.fileData);
         setUploadStatus('Uploading blob...');
         try {
-          let signerAccount = storageAccountAddress;
-          if (currentUploadData.parsedAddress) {
-            signerAccount = currentUploadData.parsedAddress;
-          }
           await uploadBlobs({
-            signer: { account: signerAccount, signAndSubmitTransaction: solanaSignAndSubmitTransaction },
+            signer: { account: storageAccountAddress, signAndSubmitTransaction: solanaSignAndSubmitTransaction },
             blobs: [{ blobName: currentUploadData.uniqueBlobName, blobData }],
             expirationMicros,
           });
-          const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${signerAccount.toString()}/${currentUploadData.uniqueBlobName}`;
+          const blobUrl = `https://api.shelbynet.shelby.xyz/shelby/v1/blobs/${storageAccountAddress.toString()}/${currentUploadData.uniqueBlobName}`;
           setUploadStatus('Blob uploaded successfully!');
           showMessage(`File uploaded successfully! URL: ${blobUrl}`, 'success');
           setUploadCompleted(true);
