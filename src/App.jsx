@@ -9,6 +9,7 @@ import { useUploadBlobs } from "@shelby-protocol/react";
 import Blobs from './pages/Blobs';
 import { useSolanaNetwork } from './SolanaWalletProvider.jsx';
 import { SolanaUploader } from './components/SolanaUploader.jsx';
+import { useFundAccount } from './hooks/useFundAccount.js';
 
 function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: appSolanaConnected, solanaPublicKey: appSolanaPublicKey, solanaWallet }) {
   const { connected, account, network } = useAptosWallet();
@@ -42,8 +43,8 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
   const [aptBalance, setAptBalance] = useState(null);
   const [shelbyUsdBalance, setShelbyUsdBalance] = useState(null);
   const [solanaBalance, setSolanaBalance] = useState(null);
-  const [faucetLoading, setFaucetLoading] = useState(false);
   const [firstBlobUploaded, setFirstBlobUploaded] = useState(false);
+  const { fundAccount, isFunding, error: fundingError } = useFundAccount();
 
   const onFirstBlobUploaded = useCallback(() => {
     setFirstBlobUploaded(true);
@@ -61,23 +62,10 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
       showMessage('Storage account address not available', 'error');
       return;
     }
-    setFaucetLoading(true);
     try {
       const storageAddressStr = storageAccountAddress.toString();
-      const results = { shelbyUsd: false, apt: false };
-      await Promise.all([
-        shelbyClient.fundAccountWithShelbyUSD({
-          address: storageAddressStr,
-          amount: 1_000_000_000,
-        }).then(() => { results.shelbyUsd = true; }).catch(() => {}),
-        shelbyClient.fundAccountWithAPT({
-          address: storageAddressStr,
-          amount: 1_000_000_000,
-        }).then(() => { results.apt = true; }).catch(() => {})
-      ]);
-      let successCount = 0;
-      if (results.shelbyUsd) successCount++;
-      if (results.apt) successCount++;
+      const result = await fundAccount(storageAddressStr);
+      const successCount = Object.values(result.funded).filter(Boolean).length;
       if (successCount > 0) {
         showMessage(`Faucet requested successfully! ${successCount}/2 tokens claimed`, 'success');
       } else {
@@ -85,8 +73,6 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
       }
     } catch (error) {
       showMessage('Failed to request Solana faucet: ' + error.message, 'error');
-    } finally {
-      setFaucetLoading(false);
     }
   };
 
@@ -95,7 +81,6 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
       showMessage('Please connect your Aptos wallet first', 'error');
       return;
     }
-    setFaucetLoading(true);
     try {
       const response = await fetch('https://faucet.shelbynet.shelby.xyz/fund', {
         method: 'POST',
@@ -113,8 +98,6 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
       }
     } catch (error) {
       showMessage('Failed to claim ShelbyUSD', 'error');
-    } finally {
-      setFaucetLoading(false);
     }
   };
 
@@ -808,9 +791,10 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
                         <>
                           <button
                             onClick={handleAptosFaucet}
+                            disabled={isFunding}
                             className="block bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between w-full"
                           >
-                            <span>Claim ShelbyUSD</span>
+                            <span>{isFunding ? 'Claiming...' : 'Claim ShelbyUSD'}</span>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                             </svg>
@@ -831,10 +815,10 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
                         <>
                           <button
                             onClick={handleSolanaFaucet}
-                            disabled={faucetLoading}
+                            disabled={isFunding}
                             className="block bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between"
                           >
-                            <span>Claim ShelbyUSD & APT</span>
+                            <span>{isFunding ? 'Claiming...' : 'Claim ShelbyUSD & APT'}</span>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                             </svg>
@@ -1130,10 +1114,10 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
                         <>
                           <button
                             onClick={handleSolanaFaucet}
-                            disabled={faucetLoading}
+                            disabled={isFunding}
                             className="block bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between"
                           >
-                            <span>Claim ShelbyUSD & APT</span>
+                            <span>{isFunding ? 'Claiming...' : 'Claim ShelbyUSD & APT'}</span>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                             </svg>
