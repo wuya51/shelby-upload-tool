@@ -19,8 +19,6 @@ function Blobs() {
   });
   
   const solanaConnected = solanaStatus === "connected";
-  const [phantomConnected, setPhantomConnected] = useState(false);
-  const [phantomPublicKey, setPhantomPublicKey] = useState(null);
   const [blobs, setBlobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -94,30 +92,7 @@ function Blobs() {
     return `${hours} hours`;
   };
 
-  useEffect(() => {
-    const checkPhantomWallet = () => {
-      if (typeof window !== 'undefined' && window.solana && window.solana.isPhantom) {
-        setPhantomConnected(window.solana.isConnected);
-        setPhantomPublicKey(window.solana.publicKey);
 
-        window.solana.on('connect', () => {
-          setPhantomConnected(true);
-          setPhantomPublicKey(window.solana.publicKey);
-        });
-
-        window.solana.on('disconnect', () => {
-          setPhantomConnected(false);
-          setPhantomPublicKey(null);
-        });
-
-        window.solana.on('accountChanged', (accounts) => {
-          setPhantomPublicKey(accounts[0]);
-        });
-      }
-    };
-
-    checkPhantomWallet();
-  }, []);
 
   useEffect(() => {
     const fetchBlobs = async () => {
@@ -128,15 +103,20 @@ function Blobs() {
         let currentAccountAddress = null;
         
         if (aptosConnected && aptosAccount && aptosAccount.address) {
-          currentAccountAddress = parseAddress(aptosAccount.address);
+          try {
+            currentAccountAddress = parseAddress(aptosAccount.address);
+          } catch (error) {
+          }
         } else if (solanaConnected && storageAccountAddress) {
-          currentAccountAddress = storageAccountAddress.toString();
-        } else if (phantomConnected && phantomPublicKey) {
-          currentAccountAddress = phantomPublicKey.toString();
+          try {
+            currentAccountAddress = storageAccountAddress.toString();
+          } catch (error) {
+          }
         }
 
         if (!currentAccountAddress) {
           setBlobs([]);
+          setError('Please connect wallet');
           setLoading(false);
           return;
         }
@@ -220,7 +200,7 @@ function Blobs() {
     };
 
     fetchBlobs();
-  }, [aptosConnected, aptosAccount, solanaConnected, storageAccountAddress, phantomConnected, phantomPublicKey]);
+  }, [aptosConnected, aptosAccount, solanaConnected, storageAccountAddress]);
 
   const handleDownload = (blobName) => {
   };

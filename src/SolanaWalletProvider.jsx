@@ -1,7 +1,6 @@
 "use client";
 
-import { createClient } from "@solana/client";
-import { autoDiscover } from "@solana/client";
+import { createClient, autoDiscover } from "@solana/client";
 import { SolanaProvider } from "@solana/react-hooks";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ShelbyClient } from "@shelby-protocol/sdk/browser";
@@ -9,6 +8,9 @@ import { Network } from "@shelby-protocol/solana-kit/react";
 import React, { useState, createContext, useContext, useMemo } from "react";
 
 const isSolanaWallet = (wallet) => {
+  if (!wallet || !wallet.features) {
+    return false;
+  }
   return Object.keys(wallet.features).some((feature) =>
     feature.startsWith("solana:"),
   );
