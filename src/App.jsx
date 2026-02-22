@@ -427,8 +427,8 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
               0
             ]
           },
-          gas_unit_limit: 2000000,
-          max_gas_amount: "200000000"
+          gas_unit_limit: 5000000,
+          max_gas_amount: "500000000"
         };
         try {
           if (!signAndSubmitTransaction || typeof signAndSubmitTransaction !== 'function') {
