@@ -21,7 +21,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
  
   const { storageAccountAddress, signAndSubmitTransaction: solanaSignAndSubmitTransaction } = useStorageAccount({
     client: shelbyClient,
-    wallet: solanaWallet || wallet,
+    wallet,
   });
  
   const { mutateAsync: uploadBlobs, isPending: isUploading } = useUploadBlobs({
@@ -426,9 +426,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
               parseInt(permissionValue),
               0
             ]
-          },
-          gas_unit_limit: 10000000,
-          max_gas_amount: "1000000000"
+          }
         };
         try {
           if (!signAndSubmitTransaction || typeof signAndSubmitTransaction !== 'function') {
