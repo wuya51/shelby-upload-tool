@@ -789,16 +789,17 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
                     <div className="space-y-3">
                       {connected && account ? (
                         <>
-                          <button
-                            onClick={handleAptosFaucet}
-                            disabled={isFunding}
+                          <a
+                            href={`https://faucet.shelbynet.shelby.xyz/fund?address=${parseAddress(account.address)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="block bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between w-full"
                           >
-                            <span>{isFunding ? 'Claiming...' : 'Claim ShelbyUSD'}</span>
+                            <span>Claim ShelbyUSD</span>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                             </svg>
-                          </button>
+                          </a>
                           <a
                             href={`https://docs.shelby.xyz/apis/faucet/aptos?address=${parseAddress(account.address)}`}
                             target="_blank"
