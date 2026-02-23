@@ -262,9 +262,6 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
       const fileData = new Uint8Array(arrayBuffer);
       const SHELBY_API_KEY = import.meta.env.VITE_SHELBY_API_KEY || '';
       const SHELBY_BEARER_TOKEN = import.meta.env.VITE_SHELBY_BEARER_TOKEN || '';
-      if (!SHELBY_API_KEY || !SHELBY_BEARER_TOKEN) {
-        throw new Error('API keys are not available');
-      }
       const moduleAddress = import.meta.env.VITE_SHELBY_MODULE_ADDRESS || "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5";
       let parsedAddress;
       if (connected && account) {
@@ -480,8 +477,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
         setUploadStatus('Verifying transaction...');
         const transactionUrl = `${getShelbyFullnodeUrl()}/transactions/by_hash/${txResponse.hash}`;
         const transactionResponse = await fetch(transactionUrl, {
-          method: 'GET',
-          headers: { 'X-Shelby-Api-Key': SHELBY_API_KEY }
+          method: 'GET'
         });
         if (!transactionResponse.ok) {
           const errorData = await transactionResponse.text();
@@ -504,11 +500,6 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
           setLoading(false);
           return;
         }
-        const { ShelbyClient } = await import("@shelby-protocol/sdk/browser");
-        const shelbyClient = new ShelbyClient({
-          network: Network.SHELBYNET,
-          apiKey: SHELBY_BEARER_TOKEN
-        });
         const blobData = currentUploadData.fileData instanceof Uint8Array
           ? currentUploadData.fileData
           : new Uint8Array(currentUploadData.fileData);
@@ -520,8 +511,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
         const startResponse = await fetch(startUrl, {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${SHELBY_BEARER_TOKEN}`
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({
             rawAccount: account.toString(),
@@ -550,8 +540,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
           const partResponse = await fetch(partUrl, {
             method: "PUT",
             headers: {
-              "Content-Type": "application/octet-stream",
-              "Authorization": `Bearer ${SHELBY_BEARER_TOKEN}`
+              "Content-Type": "application/octet-stream"
             },
             body: partData
           });
@@ -564,8 +553,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
         const completeResponse = await fetch(completeUrl, {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${SHELBY_BEARER_TOKEN}`
+            "Content-Type": "application/json"
           }
         });
         try { completeResponseBody = await completeResponse.text(); } catch {}

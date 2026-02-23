@@ -54,7 +54,7 @@ export function SolanaWalletProvider({ children }) {
 
   const shelbyClient = useMemo(() => new ShelbyClient({
     network: Network.SHELBYNET,
-    apiKey: import.meta.env.VITE_SHELBY_BEARER_TOKEN || '',
+    apiKey: import.meta.env.VITE_SHELBY_API_KEY || '',
   }), []);
 
   const switchNetwork = (network) => {
