@@ -7,5 +7,5 @@ import { Network } from "@shelby-protocol/solana-kit/react";
  */
 export const shelbyClient = new ShelbyClient({
   network: Network.SHELBYNET,
-  apiKey: import.meta.env.VITE_SHELBY_BEARER_TOKEN || "",
+  apiKey: import.meta.env.VITE_SHELBY_API_KEY || "",
 });

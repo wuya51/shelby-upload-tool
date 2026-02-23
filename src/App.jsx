@@ -72,7 +72,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
         showMessage('Faucet request failed for all tokens', 'error');
       }
     } catch (error) {
-      showMessage('Failed to request Solana faucet: ' + error.message, 'error');
+      showMessage('Failed to request Solana faucet: ' + (error.message || 'Unknown error'), 'error');
     }
   };
 
@@ -82,22 +82,61 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
       return;
     }
     try {
-      const response = await fetch('https://faucet.shelbynet.shelby.xyz/fund', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          address: parseAddress(account.address),
-          amount: 1000000000
-        })
-      });
-      if (response.ok) {
-        showMessage('Successfully claimed ShelbyUSD', 'success');
+      const address = parseAddress(account.address);
+      const results = { shelbyUsd: false, apt: false };
+      
+      let errorMessage = null;
+      
+      await Promise.all([
+        fetch('https://faucet.shelbynet.shelby.xyz/fund', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            address,
+            amount: 1000000000
+          })
+        }).then(async response => {
+          if (response.ok) {
+            results.shelbyUsd = true;
+          } else {
+            try {
+              const errorData = await response.json();
+              if (errorData.message) {
+                errorMessage = errorData.message;
+              }
+            } catch {}
+          }
+        }).catch(() => {}),
+        
+        fetch('https://faucet.shelbynet.shelby.xyz/fund', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            address,
+            amount: 1000000000,
+            token: 'APT'
+          })
+        }).then(async response => {
+          if (response.ok) {
+            results.apt = true;
+          } else {
+            try {
+              const errorData = await response.json();
+              if (errorData.message) {
+                errorMessage = errorData.message;
+              }
+            } catch {}
+          }
+        }).catch(() => {})
+      ]);
+      
+      if (results.apt) {
+        showMessage('Successfully claimed APT!', 'success');
       } else {
-        const errorData = await response.json();
-        showMessage(`Failed to claim: ${errorData.message || 'Unknown error'}`, 'error');
+        showMessage(errorMessage || 'Failed to claim APT', 'error');
       }
     } catch (error) {
-      showMessage('Failed to claim ShelbyUSD', 'error');
+      showMessage('Failed to claim tokens', 'error');
     }
   };
 
@@ -739,6 +778,30 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
                             </span>
                           </div>
                         </div>
+                        {connected && account && (
+                          <div className="flex items-center p-3 rounded-lg bg-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div className="flex justify-between items-center w-full">
+                              <span className="text-sm font-medium text-gray-700">Network</span>
+                              <div className="flex items-center">
+                                {network?.name === 'custom' || (network?.name && network.name.toLowerCase().includes('shelby')) ? (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                ) : (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                )}
+                                <span className="text-sm font-medium text-gray-800">
+                                  {network?.name === 'custom' ? 'ShelbyNet' : network?.name || 'ShelbyNet'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                         {!connected && solanaConnected && (
                           <div className="flex items-center p-3 rounded-lg bg-white">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -789,24 +852,28 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
                     <div className="space-y-3">
                       {connected && account ? (
                         <>
+                          <button
+                            onClick={handleAptosFaucet}
+                            disabled={isFunding}
+                            className="block bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between w-full"
+                          >
+                            <span>{isFunding ? 'Claiming...' : 'Claim APT'}</span>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
+                          </button>
                           <a
                             href={`https://faucet.shelbynet.shelby.xyz/fund?address=${parseAddress(account.address)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between w-full"
+                            className="block bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between"
                           >
-                            <span>Claim ShelbyUSD</span>
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                            </svg>
-                          </a>
-                          <a
-                            href={`https://docs.shelby.xyz/apis/faucet/aptos?address=${parseAddress(account.address)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block bg-green-50 hover:bg-green-100 text-green-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between"
-                          >
-                            <span>Claim APT</span>
+                            <div className="flex items-center">
+                              <span>ShelbyUSD Faucet</span>
+                              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </div>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                             </svg>
@@ -817,7 +884,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
                           <button
                             onClick={handleSolanaFaucet}
                             disabled={isFunding}
-                            className="block bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between"
+                            className="block bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between w-full"
                           >
                             <span>{isFunding ? 'Claiming...' : 'Claim ShelbyUSD & APT'}</span>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1040,6 +1107,30 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
                             </span>
                           </div>
                         </div>
+                        {connected && account && (
+                          <div className="flex items-center p-3 rounded-lg bg-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div className="flex justify-between items-center w-full">
+                              <span className="text-sm font-medium text-gray-700">Network</span>
+                              <div className="flex items-center">
+                                {network?.name === 'custom' || (network?.name && network.name.toLowerCase().includes('shelby')) ? (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                ) : (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                )}
+                                <span className="text-sm font-medium text-gray-800">
+                                  {network?.name === 'custom' ? 'ShelbyNet' : network?.name || 'ShelbyNet'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                         {!connected && solanaConnected && (
                           <div className="flex items-center p-3 rounded-lg bg-white">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1092,22 +1183,28 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
                         <>
                           <button
                             onClick={handleAptosFaucet}
+                            disabled={isFunding}
                             className="block bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between w-full"
                           >
-                            <span>Claim ShelbyUSD</span>
+                            <span>{isFunding ? 'Claiming...' : 'Claim APT'}</span>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                             </svg>
                           </button>
                           <a
-                            href={`https://docs.shelby.xyz/apis/faucet/aptos?address=${parseAddress(account.address)}`}
+                            href={`https://faucet.shelbynet.shelby.xyz/fund?address=${parseAddress(account.address)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block bg-green-50 hover:bg-green-100 text-green-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between"
+                            className="block bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between"
                           >
-                            <span>Claim APT</span>
+                            <div className="flex items-center">
+                              <span>ShelbyUSD Faucet</span>
+                              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </div>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                             </svg>
                           </a>
                         </>
@@ -1116,7 +1213,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
                           <button
                             onClick={handleSolanaFaucet}
                             disabled={isFunding}
-                            className="block bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between"
+                            className="block bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between w-full"
                           >
                             <span>{isFunding ? 'Claiming...' : 'Claim ShelbyUSD & APT'}</span>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
