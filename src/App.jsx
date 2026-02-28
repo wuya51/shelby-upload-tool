@@ -314,7 +314,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
       const fileData = new Uint8Array(arrayBuffer);
       const SHELBY_API_KEY = import.meta.env.VITE_SHELBY_API_KEY || '';
       const SHELBY_BEARER_TOKEN = import.meta.env.VITE_SHELBY_BEARER_TOKEN || '';
-      const moduleAddress = import.meta.env.VITE_SHELBY_MODULE_ADDRESS || "0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5";
+      const moduleAddress = import.meta.env.VITE_SHELBY_MODULE_ADDRESS || "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a";
       let parsedAddress;
       if (connected && account) {
         setWalletType('aptos');
