@@ -72,7 +72,20 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
         showMessage('Faucet request failed for all tokens', 'error');
       }
     } catch (error) {
-      showMessage('Failed to request Solana faucet: ' + (error.message || 'Unknown error'), 'error');
+      let errorMessage = 'Failed to request Solana faucet: ' + (error.message || 'Unknown error');
+      // Check if error has rejection_reasons
+      if (error.response && error.response.data) {
+        const errorData = error.response.data;
+        if (errorData.rejection_reasons && errorData.rejection_reasons.length > 0) {
+          const rejectionReason = errorData.rejection_reasons[0];
+          if (rejectionReason.reason) {
+            errorMessage = rejectionReason.reason;
+          }
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      }
+      showMessage(errorMessage, 'error');
     }
   };
 
@@ -137,6 +150,45 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
       }
     } catch (error) {
       showMessage('Failed to claim tokens', 'error');
+    }
+  };
+
+  const handleShelbyUsdFaucet = async () => {
+    if (!connected || !account) {
+      showMessage('Please connect your Aptos wallet first', 'error');
+      return;
+    }
+    try {
+      const address = parseAddress(account.address);
+      
+      const response = await fetch('https://faucet.shelbynet.shelby.xyz/fund', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address,
+          amount: 1000000000
+        })
+      });
+      
+      if (response.ok) {
+        showMessage('Successfully claimed ShelbyUSD!', 'success');
+      } else {
+        try {
+          const errorData = await response.json();
+          let errorMessage = errorData.message || 'Failed to claim ShelbyUSD';
+          if (errorData.rejection_reasons && errorData.rejection_reasons.length > 0) {
+            const rejectionReason = errorData.rejection_reasons[0];
+            if (rejectionReason.reason) {
+              errorMessage = rejectionReason.reason;
+            }
+          }
+          showMessage(errorMessage, 'error');
+        } catch {
+          showMessage('Failed to claim ShelbyUSD', 'error');
+        }
+      }
+    } catch (error) {
+      showMessage('Failed to claim ShelbyUSD', 'error');
     }
   };
 
@@ -850,22 +902,16 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                             </svg>
                           </button>
-                          <a
-                            href={`https://faucet.shelbynet.shelby.xyz/fund?address=${parseAddress(account.address)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between"
+                          <button
+                            onClick={handleShelbyUsdFaucet}
+                            disabled={isFunding}
+                            className="block bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between w-full"
                           >
-                            <div className="flex items-center">
-                              <span>ShelbyUSD Faucet</span>
-                              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                              </svg>
-                            </div>
+                            <span>{isFunding ? 'Claiming...' : 'Claim ShelbyUSD'}</span>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                             </svg>
-                          </a>
+                          </button>
                         </>
                       ) : (
                         <>
@@ -1179,22 +1225,16 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                             </svg>
                           </button>
-                          <a
-                            href={`https://faucet.shelbynet.shelby.xyz/fund?address=${parseAddress(account.address)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between"
+                          <button
+                            onClick={handleShelbyUsdFaucet}
+                            disabled={isFunding}
+                            className="block bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between w-full"
                           >
-                            <div className="flex items-center">
-                              <span>ShelbyUSD Faucet</span>
-                              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                              </svg>
-                            </div>
+                            <span>{isFunding ? 'Claiming...' : 'Claim ShelbyUSD'}</span>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                             </svg>
-                          </a>
+                          </button>
                         </>
                       ) : (
                         <>
@@ -1203,7 +1243,7 @@ function UploadPage({ signAndSubmitTransaction, showMessage, solanaConnected: ap
                             disabled={isFunding}
                             className="block bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-between w-full"
                           >
-                            <span>{isFunding ? 'Claiming...' : 'Claim ShelbyUSD & APT'}</span>
+                            <span>{isFunding ? 'Claiming...' : 'Claim APT'}</span>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                             </svg>
