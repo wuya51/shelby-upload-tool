@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@aptos-labs/derived-wallet-solana": "^0.12.0",
-    "@aptos-labs/ts-sdk": "^5.1.1",
+    "@aptos-labs/ts-sdk": "^5.2.1",
     "@aptos-labs/wallet-adapter-core": "^8.2.0",
     "@aptos-labs/wallet-adapter-react": "^8.2.1",
     "@shelby-protocol/react": "^0.0.5",
