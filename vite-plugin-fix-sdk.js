@@ -39,16 +39,18 @@ function findSdkInPnpm() {
 export default function fixSdkPlugin() {
   return {
     name: 'fix-sdk-plugin',
-    buildStart() {
+    enforce: 'pre',
+    configResolved(config) {
+      const logger = config.logger;
       const NEW_DEPLOYER = process.env.VITE_SHELBY_MODULE_ADDRESS || loadEnvFile();
       
       if (!NEW_DEPLOYER) {
-        console.error('❌ VITE_SHELBY_MODULE_ADDRESS is not set');
+        logger.error('❌ VITE_SHELBY_MODULE_ADDRESS is not set');
         return;
       }
 
-      console.log('🔧 Vite Plugin: Fixing SDK...');
-      console.log('NEW_DEPLOYER:', NEW_DEPLOYER);
+      logger.info('🔧 Vite Plugin: Fixing SDK...');
+      logger.info('NEW_DEPLOYER: ' + NEW_DEPLOYER);
 
       let sdkDir = findSdkInPnpm();
       
@@ -67,14 +69,16 @@ export default function fixSdkPlugin() {
       }
       
       if (!sdkDir) {
-        console.error('❌ SDK directory not found');
+        logger.error('❌ SDK directory not found');
         return;
       }
 
-      console.log('SDK directory:', sdkDir);
+      logger.info('SDK directory: ' + sdkDir);
 
       const files = fs.readdirSync(sdkDir);
       const chunkFiles = files.filter(f => f.startsWith('chunk-') && f.endsWith('.mjs'));
+      
+      logger.info('Found ' + chunkFiles.length + ' chunk files');
       
       let fixedCount = 0;
 
@@ -85,12 +89,12 @@ export default function fixSdkPlugin() {
         if (content.includes(OLD_DEPLOYER)) {
           content = content.replace(new RegExp(OLD_DEPLOYER, 'g'), NEW_DEPLOYER);
           fs.writeFileSync(filePath, content);
-          console.log('✅ Fixed:', file);
+          logger.info('✅ Fixed: ' + file);
           fixedCount++;
         }
       }
 
-      console.log(`✅ SDK fix completed: ${fixedCount} files fixed`);
+      logger.info('✅ SDK fix completed: ' + fixedCount + ' files fixed');
     }
   };
 }
