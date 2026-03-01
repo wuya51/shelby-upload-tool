@@ -1,0 +1,5 @@
+{
+  "buildCommand": "rm -rf node_modules/.cache node_modules/.vite && node fix-sdk.js && vite build",
+  "installCommand": "pnpm install",
+  "framework": "vite"
+}
