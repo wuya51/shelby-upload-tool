@@ -1,0 +1,3 @@
+{
+  "buildCommand": "node fix-sdk.js && vite build"
+}
