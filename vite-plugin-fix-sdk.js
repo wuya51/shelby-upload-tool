@@ -18,6 +18,24 @@ function loadEnvFile() {
   return null;
 }
 
+function findSdkInPnpm() {
+  const pnpmDir = path.join(process.cwd(), 'node_modules/.pnpm');
+  if (!fs.existsSync(pnpmDir)) {
+    return null;
+  }
+  
+  const entries = fs.readdirSync(pnpmDir);
+  for (const entry of entries) {
+    if (entry.startsWith('@shelby-protocol+sdk@')) {
+      const sdkDist = path.join(pnpmDir, entry, 'node_modules/@shelby-protocol/sdk/dist');
+      if (fs.existsSync(sdkDist)) {
+        return sdkDist;
+      }
+    }
+  }
+  return null;
+}
+
 export default function fixSdkPlugin() {
   return {
     name: 'fix-sdk-plugin',
@@ -32,12 +50,28 @@ export default function fixSdkPlugin() {
       console.log('🔧 Vite Plugin: Fixing SDK...');
       console.log('NEW_DEPLOYER:', NEW_DEPLOYER);
 
-      const sdkDir = path.join(process.cwd(), 'node_modules/@shelby-protocol/sdk/dist');
+      let sdkDir = findSdkInPnpm();
       
-      if (!fs.existsSync(sdkDir)) {
-        console.error('❌ SDK directory not found:', sdkDir);
+      if (!sdkDir) {
+        const possiblePaths = [
+          './node_modules/@shelby-protocol/sdk/dist',
+          process.cwd() + '/node_modules/@shelby-protocol/sdk/dist',
+        ];
+        
+        for (const tryPath of possiblePaths) {
+          if (fs.existsSync(tryPath)) {
+            sdkDir = tryPath;
+            break;
+          }
+        }
+      }
+      
+      if (!sdkDir) {
+        console.error('❌ SDK directory not found');
         return;
       }
+
+      console.log('SDK directory:', sdkDir);
 
       const files = fs.readdirSync(sdkDir);
       const chunkFiles = files.filter(f => f.startsWith('chunk-') && f.endsWith('.mjs'));

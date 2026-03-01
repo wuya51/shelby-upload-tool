@@ -47,45 +47,52 @@ if (!NEW_DEPLOYER) {
   process.exit(1);
 }
 
-// Try multiple possible paths for the SDK (including pnpm paths)
+// Find SDK in pnpm node_modules
+function findSdkInPnpm() {
+  const pnpmDir = path.join(process.cwd(), 'node_modules/.pnpm');
+  if (!fs.existsSync(pnpmDir)) {
+    return null;
+  }
+  
+  const entries = fs.readdirSync(pnpmDir);
+  for (const entry of entries) {
+    if (entry.startsWith('@shelby-protocol+sdk@')) {
+      const sdkDist = path.join(pnpmDir, entry, 'node_modules/@shelby-protocol/sdk/dist');
+      if (fs.existsSync(sdkDist)) {
+        return sdkDist;
+      }
+    }
+  }
+  return null;
+}
+
+// Try multiple possible paths for the SDK
 const POSSIBLE_PATHS = [
   './node_modules/@shelby-protocol/sdk/dist',
   path.join(__dirname, 'node_modules/@shelby-protocol/sdk/dist'),
   '/vercel/path0/node_modules/@shelby-protocol/sdk/dist',
   process.cwd() + '/node_modules/@shelby-protocol/sdk/dist',
-  // pnpm specific paths
-  './node_modules/.pnpm/@shelby-protocol+sdk@*/node_modules/@shelby-protocol/sdk/dist',
-  '/vercel/path0/node_modules/.pnpm/@shelby-protocol+sdk@*/node_modules/@shelby-protocol/sdk/dist',
 ];
 
 let sdkDir = null;
 
-// Find the SDK directory
-for (const tryPath of POSSIBLE_PATHS) {
-  console.log('Checking path:', tryPath);
-  if (tryPath.includes('*')) {
-    // Handle glob pattern for pnpm
-    const baseDir = path.dirname(tryPath.split('*')[0]);
-    if (fs.existsSync(baseDir)) {
-      const entries = fs.readdirSync(baseDir);
-      for (const entry of entries) {
-        if (entry.startsWith('@shelby-protocol+sdk@')) {
-          const fullPath = path.join(baseDir, entry, 'node_modules/@shelby-protocol/sdk/dist');
-          console.log('  Checking pnpm path:', fullPath);
-          if (fs.existsSync(fullPath)) {
-            console.log('✅ Found SDK at:', fullPath);
-            sdkDir = fullPath;
-            break;
-          }
-        }
-      }
+// First try pnpm path
+console.log('Checking pnpm path...');
+sdkDir = findSdkInPnpm();
+if (sdkDir) {
+  console.log('✅ Found SDK in pnpm at:', sdkDir);
+}
+
+// If not found in pnpm, try other paths
+if (!sdkDir) {
+  for (const tryPath of POSSIBLE_PATHS) {
+    console.log('Checking path:', tryPath);
+    if (fs.existsSync(tryPath)) {
+      console.log('✅ Found SDK at:', tryPath);
+      sdkDir = tryPath;
+      break;
     }
-  } else if (fs.existsSync(tryPath)) {
-    console.log('✅ Found SDK at:', tryPath);
-    sdkDir = tryPath;
-    break;
   }
-  if (sdkDir) break;
 }
 
 if (!sdkDir) {
@@ -100,6 +107,7 @@ try {
   const chunkFiles = files.filter(f => f.startsWith('chunk-') && f.endsWith('.mjs'));
   
   console.log(`\nFound ${chunkFiles.length} chunk files to check`);
+  console.log('Chunk files:', chunkFiles);
 
   let fixedCount = 0;
   let alreadyFixedCount = 0;
