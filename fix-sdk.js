@@ -47,12 +47,15 @@ if (!NEW_DEPLOYER) {
   process.exit(1);
 }
 
-// Try multiple possible paths for the SDK
+// Try multiple possible paths for the SDK (including pnpm paths)
 const POSSIBLE_PATHS = [
   './node_modules/@shelby-protocol/sdk/dist',
   path.join(__dirname, 'node_modules/@shelby-protocol/sdk/dist'),
   '/vercel/path0/node_modules/@shelby-protocol/sdk/dist',
   process.cwd() + '/node_modules/@shelby-protocol/sdk/dist',
+  // pnpm specific paths
+  './node_modules/.pnpm/@shelby-protocol+sdk@*/node_modules/@shelby-protocol/sdk/dist',
+  '/vercel/path0/node_modules/.pnpm/@shelby-protocol+sdk@*/node_modules/@shelby-protocol/sdk/dist',
 ];
 
 let sdkDir = null;
@@ -60,11 +63,29 @@ let sdkDir = null;
 // Find the SDK directory
 for (const tryPath of POSSIBLE_PATHS) {
   console.log('Checking path:', tryPath);
-  if (fs.existsSync(tryPath)) {
+  if (tryPath.includes('*')) {
+    // Handle glob pattern for pnpm
+    const baseDir = path.dirname(tryPath.split('*')[0]);
+    if (fs.existsSync(baseDir)) {
+      const entries = fs.readdirSync(baseDir);
+      for (const entry of entries) {
+        if (entry.startsWith('@shelby-protocol+sdk@')) {
+          const fullPath = path.join(baseDir, entry, 'node_modules/@shelby-protocol/sdk/dist');
+          console.log('  Checking pnpm path:', fullPath);
+          if (fs.existsSync(fullPath)) {
+            console.log('✅ Found SDK at:', fullPath);
+            sdkDir = fullPath;
+            break;
+          }
+        }
+      }
+    }
+  } else if (fs.existsSync(tryPath)) {
     console.log('✅ Found SDK at:', tryPath);
     sdkDir = tryPath;
     break;
   }
+  if (sdkDir) break;
 }
 
 if (!sdkDir) {
