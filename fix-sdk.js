@@ -34,9 +34,16 @@ function loadEnvFile() {
 // Read from environment variable or .env file
 const NEW_DEPLOYER = process.env.VITE_SHELBY_MODULE_ADDRESS || loadEnvFile();
 
+console.log('🔧 Fix SDK Script Starting...');
+console.log('Current directory:', process.cwd());
+console.log('Script directory:', __dirname);
+console.log('Environment VITE_SHELBY_MODULE_ADDRESS:', process.env.VITE_SHELBY_MODULE_ADDRESS);
+console.log('Loaded from .env:', loadEnvFile());
+console.log('Final NEW_DEPLOYER:', NEW_DEPLOYER);
+
 if (!NEW_DEPLOYER) {
   console.error('❌ VITE_SHELBY_MODULE_ADDRESS is not set');
-  console.error('Please set it in your .env file or environment variables');
+  console.error('Please set it in your .env file or Vercel environment variables');
   process.exit(1);
 }
 
@@ -47,11 +54,6 @@ const POSSIBLE_PATHS = [
   '/vercel/path0/node_modules/@shelby-protocol/sdk/dist',
   process.cwd() + '/node_modules/@shelby-protocol/sdk/dist',
 ];
-
-console.log('🔧 Fix SDK Script Starting...');
-console.log('Current directory:', process.cwd());
-console.log('Script directory:', __dirname);
-console.log('NEW_DEPLOYER:', NEW_DEPLOYER);
 
 let sdkDir = null;
 
