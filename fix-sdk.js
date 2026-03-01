@@ -7,44 +7,99 @@
 
 import fs from 'fs';
 import path from 'path';
-import { globSync } from 'glob';
+import { fileURLToPath } from 'url';
 
-const SDK_DIR = './node_modules/@shelby-protocol/sdk/dist';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Default deployer address from SDK
 const OLD_DEPLOYER = '0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5';
-const NEW_DEPLOYER = '0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a';
+
+// Read from .env file if exists
+function loadEnvFile() {
+  const envPath = path.join(process.cwd(), '.env');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    const lines = envContent.split('\n');
+    for (const line of lines) {
+      const match = line.match(/^VITE_SHELBY_MODULE_ADDRESS=(.+)$/);
+      if (match) {
+        return match[1].trim();
+      }
+    }
+  }
+  return null;
+}
+
+// Read from environment variable or .env file
+const NEW_DEPLOYER = process.env.VITE_SHELBY_MODULE_ADDRESS || loadEnvFile();
+
+if (!NEW_DEPLOYER) {
+  console.error('❌ VITE_SHELBY_MODULE_ADDRESS is not set');
+  console.error('Please set it in your .env file or environment variables');
+  process.exit(1);
+}
+
+// Try multiple possible paths for the SDK
+const POSSIBLE_PATHS = [
+  './node_modules/@shelby-protocol/sdk/dist',
+  path.join(__dirname, 'node_modules/@shelby-protocol/sdk/dist'),
+  '/vercel/path0/node_modules/@shelby-protocol/sdk/dist',
+  process.cwd() + '/node_modules/@shelby-protocol/sdk/dist',
+];
+
+console.log('🔧 Fix SDK Script Starting...');
+console.log('Current directory:', process.cwd());
+console.log('Script directory:', __dirname);
+console.log('NEW_DEPLOYER:', NEW_DEPLOYER);
+
+let sdkDir = null;
+
+// Find the SDK directory
+for (const tryPath of POSSIBLE_PATHS) {
+  console.log('Checking path:', tryPath);
+  if (fs.existsSync(tryPath)) {
+    console.log('✅ Found SDK at:', tryPath);
+    sdkDir = tryPath;
+    break;
+  }
+}
+
+if (!sdkDir) {
+  console.error('❌ Could not find SDK directory in any of the expected paths');
+  console.error('Searched paths:', POSSIBLE_PATHS);
+  process.exit(1);
+}
 
 try {
-  // Find all chunk files that may contain SHELBY_DEPLOYER
-  const chunkFiles = globSync(`${SDK_DIR}/chunk-*.mjs`);
+  // Find all chunk files
+  const files = fs.readdirSync(sdkDir);
+  const chunkFiles = files.filter(f => f.startsWith('chunk-') && f.endsWith('.mjs'));
   
-  if (chunkFiles.length === 0) {
-    console.error('❌ No SDK chunk files found in:', SDK_DIR);
-    process.exit(1);
-  }
-
-  console.log(`Found ${chunkFiles.length} chunk files to check`);
+  console.log(`\nFound ${chunkFiles.length} chunk files to check`);
 
   let fixedCount = 0;
   let alreadyFixedCount = 0;
   let notFoundCount = 0;
 
   for (const file of chunkFiles) {
-    let content = fs.readFileSync(file, 'utf8');
+    const filePath = path.join(sdkDir, file);
+    let content = fs.readFileSync(filePath, 'utf8');
 
     if (content.includes(OLD_DEPLOYER)) {
       content = content.replace(new RegExp(OLD_DEPLOYER, 'g'), NEW_DEPLOYER);
-      fs.writeFileSync(file, content);
-      console.log('✅ Fixed:', path.basename(file));
+      fs.writeFileSync(filePath, content);
+      console.log('✅ Fixed:', file);
       fixedCount++;
     } else if (content.includes(NEW_DEPLOYER)) {
-      console.log('✓ Already fixed:', path.basename(file));
+      console.log('✓ Already fixed:', file);
       alreadyFixedCount++;
     } else {
       notFoundCount++;
     }
   }
 
-  console.log(`\nSummary:`);
+  console.log(`\n📊 Summary:`);
   console.log(`  Fixed: ${fixedCount}`);
   console.log(`  Already fixed: ${alreadyFixedCount}`);
   console.log(`  No deployer found: ${notFoundCount}`);
@@ -53,7 +108,10 @@ try {
     console.error('❌ Could not find SHELBY_DEPLOYER in any SDK file');
     process.exit(1);
   }
+  
+  console.log('\n✅ SDK fix completed successfully!');
 } catch (error) {
   console.error('❌ Error fixing SDK:', error.message);
+  console.error(error.stack);
   process.exit(1);
 }
