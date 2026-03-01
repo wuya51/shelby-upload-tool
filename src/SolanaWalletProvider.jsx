@@ -5,6 +5,7 @@ import { SolanaProvider } from "@solana/react-hooks";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ShelbyClient } from "@shelby-protocol/sdk/browser";
 import { Network } from "@shelby-protocol/solana-kit/react";
+import { AccountAddress } from "@aptos-labs/ts-sdk";
 import React, { useState, createContext, useContext, useMemo } from "react";
 
 const isSolanaWallet = (wallet) => {
@@ -52,10 +53,14 @@ export function SolanaWalletProvider({ children }) {
 
   const queryClient = useMemo(() => new QueryClient(), [currentNetwork]);
 
-  const shelbyClient = useMemo(() => new ShelbyClient({
-    network: Network.SHELBYNET,
-    apiKey: import.meta.env.VITE_SHELBY_API_KEY || '',
-  }), []);
+  const shelbyClient = useMemo(() => {
+    const moduleAddress = import.meta.env.VITE_SHELBY_MODULE_ADDRESS;
+    return new ShelbyClient({
+      network: Network.SHELBYNET,
+      apiKey: import.meta.env.VITE_SHELBY_API_KEY || '',
+      deployer: moduleAddress ? AccountAddress.fromString(moduleAddress) : undefined,
+    });
+  }, []);
 
   const switchNetwork = (network) => {
     if (NETWORKS[network]) {

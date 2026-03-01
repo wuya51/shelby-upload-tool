@@ -121,18 +121,20 @@ function Blobs() {
           return;
         }
 
-        const { Network } = await import('@aptos-labs/ts-sdk');
+        const { Network, AccountAddress } = await import('@aptos-labs/ts-sdk');
         const { ShelbyClient } = await import('@shelby-protocol/sdk/browser');
         
-        const SHELBY_API_KEY = import.meta.env.VITE_SHELBY_BEARER_TOKEN || '';
+        const SHELBY_API_KEY = import.meta.env.VITE_SHELBY_API_KEY || '';
+        const moduleAddress = import.meta.env.VITE_SHELBY_MODULE_ADDRESS;
         
         if (!SHELBY_API_KEY) {
-          throw new Error('SHELBY_BEARER_TOKEN is not set in .env file');
+          throw new Error('SHELBY_API_KEY is not set in .env file');
         }
         
         const client = new ShelbyClient({
           network: Network.SHELBYNET,
-          apiKey: SHELBY_API_KEY
+          apiKey: SHELBY_API_KEY,
+          deployer: moduleAddress ? AccountAddress.fromString(moduleAddress) : undefined,
         });
         
         if (!currentAccountAddress) {
@@ -184,7 +186,7 @@ function Blobs() {
         
         if (error instanceof Error) {
           if (error.message.includes('SHELBY_API_KEY is not set')) {
-            errorMessage = 'SHELBY_API_KEY is not set in .env file';
+            errorMessage = 'SHELBY_API_KEY is not set in environment variables';
           } else if (error.message.includes('Failed to parse account address')) {
             errorMessage = 'Failed to parse account address';
           } else if (error.message.includes('Cannot find module')) {
