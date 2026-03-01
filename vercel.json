@@ -1,3 +1,4 @@
 {
-  "buildCommand": "node fix-sdk.js && vite build"
+  "buildCommand": "node fix-sdk.js && vite build && node fix-dist.js",
+  "installCommand": "pnpm install --no-frozen-lockfile"
 }
