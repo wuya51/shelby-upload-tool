@@ -18,6 +18,7 @@ const OLD_DEPLOYER = '0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb006
 // Read from .env file if exists
 function loadEnvFile() {
   const envPath = path.join(process.cwd(), '.env');
+  console.log('Checking .env file:', envPath);
   if (fs.existsSync(envPath)) {
     const envContent = fs.readFileSync(envPath, 'utf8');
     const lines = envContent.split('\n');
@@ -50,14 +51,20 @@ if (!NEW_DEPLOYER) {
 // Find SDK in pnpm node_modules
 function findSdkInPnpm() {
   const pnpmDir = path.join(process.cwd(), 'node_modules/.pnpm');
+  console.log('Checking pnpm directory:', pnpmDir);
+  
   if (!fs.existsSync(pnpmDir)) {
+    console.log('❌ pnpm directory does not exist');
     return null;
   }
   
   const entries = fs.readdirSync(pnpmDir);
+  console.log('Found entries in pnpm:', entries.length);
+  
   for (const entry of entries) {
     if (entry.startsWith('@shelby-protocol+sdk@')) {
       const sdkDist = path.join(pnpmDir, entry, 'node_modules/@shelby-protocol/sdk/dist');
+      console.log('Checking SDK path:', sdkDist);
       if (fs.existsSync(sdkDist)) {
         return sdkDist;
       }
@@ -77,7 +84,7 @@ const POSSIBLE_PATHS = [
 let sdkDir = null;
 
 // First try pnpm path
-console.log('Checking pnpm path...');
+console.log('\n=== Checking pnpm path ===');
 sdkDir = findSdkInPnpm();
 if (sdkDir) {
   console.log('✅ Found SDK in pnpm at:', sdkDir);
@@ -85,6 +92,7 @@ if (sdkDir) {
 
 // If not found in pnpm, try other paths
 if (!sdkDir) {
+  console.log('\n=== Checking other paths ===');
   for (const tryPath of POSSIBLE_PATHS) {
     console.log('Checking path:', tryPath);
     if (fs.existsSync(tryPath)) {
@@ -104,36 +112,42 @@ if (!sdkDir) {
 try {
   // Find all chunk files
   const files = fs.readdirSync(sdkDir);
-  const chunkFiles = files.filter(f => f.startsWith('chunk-') && f.endsWith('.mjs'));
+  console.log('\n=== Files in SDK directory ===');
+  console.log('Total files:', files.length);
   
-  console.log(`\nFound ${chunkFiles.length} chunk files to check`);
-  console.log('Chunk files:', chunkFiles);
+  const chunkFiles = files.filter(f => f.startsWith('chunk-') && f.endsWith('.mjs'));
+  console.log('Chunk files found:', chunkFiles.length);
+  console.log('Chunk file names:', chunkFiles);
 
   let fixedCount = 0;
   let alreadyFixedCount = 0;
   let notFoundCount = 0;
 
+  console.log('\n=== Processing chunk files ===');
   for (const file of chunkFiles) {
     const filePath = path.join(sdkDir, file);
+    console.log('Processing:', file);
+    
     let content = fs.readFileSync(filePath, 'utf8');
 
     if (content.includes(OLD_DEPLOYER)) {
       content = content.replace(new RegExp(OLD_DEPLOYER, 'g'), NEW_DEPLOYER);
       fs.writeFileSync(filePath, content);
-      console.log('✅ Fixed:', file);
+      console.log('  ✅ Fixed:', file);
       fixedCount++;
     } else if (content.includes(NEW_DEPLOYER)) {
-      console.log('✓ Already fixed:', file);
+      console.log('  ✓ Already fixed:', file);
       alreadyFixedCount++;
     } else {
+      console.log('  - No deployer found:', file);
       notFoundCount++;
     }
   }
 
-  console.log(`\n📊 Summary:`);
-  console.log(`  Fixed: ${fixedCount}`);
-  console.log(`  Already fixed: ${alreadyFixedCount}`);
-  console.log(`  No deployer found: ${notFoundCount}`);
+  console.log('\n=== Summary ===');
+  console.log('  Fixed:', fixedCount);
+  console.log('  Already fixed:', alreadyFixedCount);
+  console.log('  No deployer found:', notFoundCount);
 
   if (fixedCount === 0 && alreadyFixedCount === 0) {
     console.error('❌ Could not find SHELBY_DEPLOYER in any SDK file');

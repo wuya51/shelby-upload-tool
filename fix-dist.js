@@ -17,6 +17,7 @@ const OLD_DEPLOYER = '0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb006
 // Read from .env file if exists
 function loadEnvFile() {
   const envPath = path.join(process.cwd(), '.env');
+  console.log('Checking .env file:', envPath);
   if (fs.existsSync(envPath)) {
     const envContent = fs.readFileSync(envPath, 'utf8');
     const lines = envContent.split('\n');
@@ -62,36 +63,45 @@ if (!fs.existsSync(assetsDir)) {
   process.exit(1);
 }
 
+console.log('Assets directory:', assetsDir);
+
 const files = fs.readdirSync(assetsDir);
 const jsFiles = files.filter(f => f.endsWith('.js'));
 
-console.log(`\nFound ${jsFiles.length} JS files to check`);
+console.log(`\n=== Files in assets directory ===`);
+console.log('Total files:', files.length);
+console.log('JS files:', jsFiles.length);
+console.log('JS file names:', jsFiles);
 
 let fixedCount = 0;
 let alreadyFixedCount = 0;
 let notFoundCount = 0;
 
+console.log('\n=== Processing JS files ===');
 for (const file of jsFiles) {
   const filePath = path.join(assetsDir, file);
+  console.log('Processing:', file);
+  
   let content = fs.readFileSync(filePath, 'utf8');
 
   if (content.includes(OLD_DEPLOYER)) {
     content = content.replace(new RegExp(OLD_DEPLOYER, 'g'), NEW_DEPLOYER);
     fs.writeFileSync(filePath, content);
-    console.log('✅ Fixed:', file);
+    console.log('  ✅ Fixed:', file);
     fixedCount++;
   } else if (content.includes(NEW_DEPLOYER)) {
-    console.log('✓ Already fixed:', file);
+    console.log('  ✓ Already fixed:', file);
     alreadyFixedCount++;
   } else {
+    console.log('  - No deployer found:', file);
     notFoundCount++;
   }
 }
 
-console.log(`\n📊 Summary:`);
-console.log(`  Fixed: ${fixedCount}`);
-console.log(`  Already fixed: ${alreadyFixedCount}`);
-console.log(`  No deployer found: ${notFoundCount}`);
+console.log('\n=== Summary ===');
+console.log('  Fixed:', fixedCount);
+console.log('  Already fixed:', alreadyFixedCount);
+console.log('  No deployer found:', notFoundCount);
 
 if (fixedCount === 0 && alreadyFixedCount === 0) {
   console.warn('⚠️  Could not find SHELBY_DEPLOYER in any dist file');
