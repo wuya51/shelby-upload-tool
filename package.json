@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node fix-sdk.js && vite build",
+    "build": "node fix-sdk.js && vite build && node fix-dist.js",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "postinstall": "node fix-sdk.js"
