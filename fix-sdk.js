@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * This script fixes the SHELBY_DEPLOYER address in the SDK.
+ * This script fixes SHELBY_DEPLOYER address in SDK.
  * Vercel rebuilds node_modules during deployment, so we need to run this
  * before the build command.
  */
@@ -12,7 +12,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Default deployer address from SDK
+// Old deployer address from SDK
 const OLD_DEPLOYER = '0xc63d6a5efb0080a6029403131715bd4971e1149f7cc099aac69bb0069b3ddbf5';
 
 // Read from .env file if exists
@@ -129,12 +129,29 @@ try {
     console.log('Processing:', file);
     
     let content = fs.readFileSync(filePath, 'utf8');
+    let modified = false;
 
+    // Check for old deployer address
     if (content.includes(OLD_DEPLOYER)) {
       content = content.replace(new RegExp(OLD_DEPLOYER, 'g'), NEW_DEPLOYER);
-      fs.writeFileSync(filePath, content);
-      console.log('  ✅ Fixed:', file);
+      modified = true;
+      console.log('  ✅ Fixed (old address):', file);
       fixedCount++;
+    }
+    
+    // Check for SHELBY_DEPLOYER constant definition
+    if (content.includes('var SHELBY_DEPLOYER = "')) {
+      const match = content.match(/var SHELBY_DEPLOYER = "([^"]+)"/);
+      if (match && match[1] !== NEW_DEPLOYER) {
+        content = content.replace(/var SHELBY_DEPLOYER = "[^"]+"/, `var SHELBY_DEPLOYER = "${NEW_DEPLOYER}"`);
+        modified = true;
+        console.log('  ✅ Fixed (SHELBY_DEPLOYER constant):', file);
+        fixedCount++;
+      }
+    }
+
+    if (modified) {
+      fs.writeFileSync(filePath, content);
     } else if (content.includes(NEW_DEPLOYER)) {
       console.log('  ✓ Already fixed:', file);
       alreadyFixedCount++;
