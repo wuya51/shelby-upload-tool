@@ -4,10 +4,12 @@ import { fileURLToPath, URL } from 'node:url'
 import path from 'path'
 import fs from 'fs'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
+import fixSdkPlugin from './vite-plugin-fix-sdk.js'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    fixSdkPlugin(),
     react(),
     nodePolyfills()
   ],
